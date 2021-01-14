@@ -17,6 +17,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Get main version
+      id: version
+      uses: notiz-dev/github-action-json-property@release
+      with:
+        path: version.json
+        prop_path: 'version'
     - name: Get branch name from branch
       run: echo "BRANCH_NAME=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
       if: startsWith(github.ref, 'refs/heads/')
