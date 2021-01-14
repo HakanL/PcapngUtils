@@ -16,14 +16,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: nelonoel/branch-name@v1.0.1
 
     - name: Get branch name from branch
       run: echo "BRANCH_NAME=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
-      if: startsWith('refs/heads/', github.ref)
+      if: startsWith(github.ref, 'refs/heads/')
     - name: Get branch name from PR
       run: echo "BRANCH_NAME=PR-$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
-      if: startsWith('refs/pull/', github.ref)
+      if: startsWith(github.ref, 'refs/pull/')
       
     - run: echo Version ${BRANCH_NAME}
     - run: echo "version=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
