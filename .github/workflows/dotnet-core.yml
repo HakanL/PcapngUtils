@@ -1,6 +1,10 @@
 name: Build and Publish
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    branches:
+      - master
 
 defaults:
   run:  
@@ -20,6 +24,10 @@ jobs:
       with:
         path: version.json
         prop_path: 'version'
+    - name: Get branch/PR
+      run: echo "PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
+      run: echo Version ${PR_NUMBER}
+    #pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
     - run: echo "version=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
       if: github.ref == 'refs/heads/master'
     - run: echo "version=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}-${GITHUB_SHA::8}-${BRANCH_NAME}" >> $GITHUB_ENV
