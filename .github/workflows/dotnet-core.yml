@@ -1,6 +1,10 @@
 name: Build and Publish
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    branches:
+      - master
 
 defaults:
   run:  
@@ -12,19 +16,26 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: nelonoel/branch-name@v1.0.1
 
-    - name: Get version
+    - name: Get main version
       id: version
       uses: notiz-dev/github-action-json-property@release
       with:
         path: version.json
         prop_path: 'version'
-    - run: echo "version=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+    - name: Get branch name from branch
+      run: echo "BRANCH_NAME=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }' | sed "s/[[:space:]_]/-/g")" >> $GITHUB_ENV
+      if: startsWith(github.ref, 'refs/heads/')
+    - name: Get branch name from PR
+      run: echo "BRANCH_NAME=PR-$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
+      if: startsWith(github.ref, 'refs/pull/')
+      
+    - run: echo Version ${BRANCH_NAME}
+    - run: echo "PACKAGE_VERSION=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
       if: github.ref == 'refs/heads/master'
-    - run: echo "version=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}-${BRANCH_NAME}" >> $GITHUB_ENV
+    - run: echo "PACKAGE_VERSION=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}-${BRANCH_NAME}-${GITHUB_SHA::8}" >> $GITHUB_ENV
       if: github.ref != 'refs/heads/master'
-    - run: echo Version is ${version}
+    - run: echo Version is ${PACKAGE_VERSION}
 
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
@@ -32,22 +43,18 @@ jobs:
         dotnet-version: 3.1.301
     - name: Install dependencies
       run: dotnet restore
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
     - name: Build
-      run: dotnet build --configuration Release --no-restore /p:Version="${version}"
+      run: dotnet build --configuration Release --no-restore /p:Version="${PACKAGE_VERSION}"
     - name: Test
       run: dotnet test --no-restore --verbosity normal
 
-    ## Publish
+    ## Publish and Tag
     - name: Publish NuGet
-      uses: brandedoutcast/publish-nuget@v2.5.5
-      env:
-        NUGET_KEY: ${{secrets.NUGET_KEY}}
-      with:
-        PROJECT_FILE_PATH: src/PcapngUtils/PcapngUtils.csproj
-        # NuGet package id, used for version detection & defaults to project name
-        PACKAGE_NAME: Haukcode.PcapngUtils
-        VERSION_STATIC: ${version}
-        # Flag to toggle git tagging, enabled by default
-        TAG_COMMIT: true
-        # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
-        INCLUDE_SYMBOLS: true
+      run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_KEY }}
+    - name: Tag
+      run: |
+        git tag "v${PACKAGE_VERSION}"
+        git push origin "v${PACKAGE_VERSION}"
+      if: github.ref == 'refs/heads/master'
