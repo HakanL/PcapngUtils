@@ -24,7 +24,7 @@ jobs:
         path: version.json
         prop_path: 'version'
     - name: Get branch name from branch
-      run: echo "BRANCH_NAME=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }' | sed "s/[\s-]/_/g")" >> $GITHUB_ENV
+      run: echo "BRANCH_NAME=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }' | sed "s/[[:space:]-]/_/g")" >> $GITHUB_ENV
       if: startsWith(github.ref, 'refs/heads/')
     - name: Get branch name from PR
       run: echo "BRANCH_NAME=PR_$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
@@ -43,6 +43,8 @@ jobs:
         dotnet-version: 3.1.301
     - name: Install dependencies
       run: dotnet restore
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
     - name: Build
       run: dotnet build --configuration Release --no-restore /p:Version="${version}"
     - name: Test
