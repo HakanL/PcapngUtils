@@ -35,5 +35,18 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             TimestampHelper postTimestamp = new TimestampHelper(postData, reorder);
             Assert.AreEqual(preTimestamp, postTimestamp);
         }
+
+        [Test]
+        public static void TimestampHelper_SecondMicrosecondCtor_Test()
+        {
+            var timestamp = new TimestampHelper(100_000_000, 123456);
+
+            Assert.AreEqual(100_000_000, timestamp.Seconds);
+            Assert.AreEqual(123456, timestamp.Microseconds);
+
+            Assert.AreEqual(0x00005AF3, timestamp.TimestampHigh);
+            Assert.AreEqual(0x107C2240, timestamp.TimestampLow);
+        }
+
     }
 }

@@ -57,7 +57,7 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             Seconds = seconds;
             Microseconds = microseconds;
 
-            long timestamp = seconds * 1000000 + microseconds;
+            long timestamp = seconds * 1000000L + microseconds;
             TimestampHigh = (uint)(timestamp / 4294967296);
             TimestampLow = (uint)(timestamp % 4294967296);
         }
