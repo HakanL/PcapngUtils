@@ -24,12 +24,13 @@ jobs:
       with:
         path: version.json
         prop_path: 'version'
-    - name: Get branch name from branch
+        
+    - name: Get branch name from github.ref
       run: echo "BRANCH_NAME=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }' | sed "s/[[:space:]_]/-/g")" >> $GITHUB_ENV
-      if: startsWith(github.ref, 'refs/heads/')
+      if: github.head_ref == ''
     - name: Get branch name from PR
-      run: echo "BRANCH_NAME=PR-$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_ENV
-      if: startsWith(github.ref, 'refs/pull/')
+      run: echo "BRANCH_NAME=PR-$(echo $GITHUB_HEAD_REF)" >> $GITHUB_ENV
+      if: github.head_ref != ''
       
     - run: echo Version ${BRANCH_NAME}
     - run: echo "PACKAGE_VERSION=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
