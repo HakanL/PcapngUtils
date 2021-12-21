@@ -26,7 +26,7 @@ namespace Haukcode.PcapngUtils
             CustomContract.Requires<ArgumentException>(File.Exists(path), "file must exists");
             
             UInt32 mask = 0;
-            using (FileStream stream = new FileStream(path, FileMode.Open))
+            using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
