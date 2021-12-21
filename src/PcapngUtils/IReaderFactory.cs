@@ -26,9 +26,9 @@ namespace Haukcode.PcapngUtils
             CustomContract.Requires<ArgumentException>(File.Exists(path), "file must exists");
             
             UInt32 mask = 0;
-            using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            using (FileStream stream = File.OpenRead(path))
             {
-                using (BinaryReader binaryReader = new BinaryReader(stream))
+                using (var binaryReader = new BinaryReader(stream))
                 {
                     if (binaryReader.BaseStream.Length < 12)
                         throw new ArgumentException(string.Format("[IReaderFactory.GetReader] file {0} is too short ", path));

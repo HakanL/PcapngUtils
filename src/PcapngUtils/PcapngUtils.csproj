@@ -13,7 +13,7 @@
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/HakanL/PcapngUtils</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
-    <PackageReleaseNotes>1.3.12 Open read-only files
+    <PackageReleaseNotes>1.3.14 Open read-only files
 1.3.0 Assembly signing
 1.2.0 Changed Seconds/Microseconds to uint. Renamed enchanted to enhanced
 1.1.0 Added new methods to get next packet as an alternative to streaming via callback event. Also added ways to add streams to the constructors.

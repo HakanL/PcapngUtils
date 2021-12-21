@@ -38,7 +38,7 @@ namespace Haukcode.PcapngUtils.Pcap
             CustomContract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(path), "path cannot be null or empty");
             CustomContract.Requires<ArgumentException>(!File.Exists(path), "file exists");
             SectionHeader sh = SectionHeader.CreateEmptyHeader(nanoseconds, reverseByteOrder);
-            Initialize(new FileStream(path, FileMode.Create),sh);
+            Initialize(new FileStream(path, FileMode.Create), sh);
         }
 
         public PcapWriter(Stream stream, bool nanoseconds = false, bool reverseByteOrder = false)
@@ -52,9 +52,9 @@ namespace Haukcode.PcapngUtils.Pcap
         {
             CustomContract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(path), "path cannot be null or empty");
             CustomContract.Requires<ArgumentException>(!File.Exists(path), "file exists");
-            CustomContract.Requires<ArgumentNullException>(header!=null, "SectionHeader cannot be null");
-            
-            Initialize(new FileStream(path, FileMode.Create),header);
+            CustomContract.Requires<ArgumentNullException>(header != null, "SectionHeader cannot be null");
+
+            Initialize(new FileStream(path, FileMode.Create), header);
         }
 
         public PcapWriter(Stream stream, SectionHeader header)
@@ -65,21 +65,21 @@ namespace Haukcode.PcapngUtils.Pcap
             Initialize(stream, header);
         }
 
-         private void Initialize(Stream stream, SectionHeader header)
-         {                     
-             CustomContract.Requires<ArgumentNullException>(stream != null, "stream cannot be null");
-             CustomContract.Requires<Exception>(stream.CanWrite == true, "Cannot write to stream");
-             CustomContract.Requires<ArgumentNullException>(header != null, "header cannot be null");
-             this.header = header;              
-             this.stream = stream;
-             binaryWriter = new BinaryWriter(stream);
-             binaryWriter.Write(header.ConvertToByte());            
-         }
+        private void Initialize(Stream stream, SectionHeader header)
+        {
+            CustomContract.Requires<ArgumentNullException>(stream != null, "stream cannot be null");
+            CustomContract.Requires<Exception>(stream.CanWrite == true, "Cannot write to stream");
+            CustomContract.Requires<ArgumentNullException>(header != null, "header cannot be null");
+            this.header = header;
+            this.stream = stream;
+            binaryWriter = new BinaryWriter(stream);
+            binaryWriter.Write(header.ConvertToByte());
+        }
         #endregion
 
-         /// <summary>
-         /// Close stream, dispose members
-         /// </summary>
+        /// <summary>
+        /// Close stream, dispose members
+        /// </summary>
         public void Close()
         {
             Dispose();
@@ -115,7 +115,7 @@ namespace Haukcode.PcapngUtils.Pcap
             {
                 OnException(exc);
             }
-        }         
+        }
 
 
         #region IDisposable Members
@@ -131,5 +131,5 @@ namespace Haukcode.PcapngUtils.Pcap
         }
 
         #endregion      
-    }  
+    }
 }

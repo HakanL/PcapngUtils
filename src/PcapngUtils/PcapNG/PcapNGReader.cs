@@ -54,7 +54,7 @@ namespace Haukcode.PcapngUtils.PcapNG
             CustomContract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(path), "path cannot be null or empty");
             CustomContract.Requires<ArgumentException>(File.Exists(path), "file must exists");
 
-            Initialize(new FileStream(path, FileMode.Open), swapBytes);
+            Initialize(File.OpenRead(path), swapBytes);
         }
 
         public PcapNGReader(Stream stream, bool reverseByteOrder)
