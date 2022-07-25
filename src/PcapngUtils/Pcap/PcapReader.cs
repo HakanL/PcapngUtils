@@ -87,6 +87,11 @@ namespace Haukcode.PcapngUtils.Pcap
                 try
                 {
                     var packet = ReadNextPacket();
+
+                    if (packet == null)
+                    {
+                        return;
+                    }
                     OnReadPacket(packet);
                 }
                 catch (Exception exc)
