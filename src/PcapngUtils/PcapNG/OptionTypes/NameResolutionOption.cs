@@ -24,10 +24,11 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region fields & properies
+
         /// <summary>
-        /// A UTF-8 string containing a comment that is associated to the current block.
+        /// A list of UTF-8 strings containing comments that are associated to the current block.
         /// </summary>
-        public string Comment
+        public List<string> Comments
         {
             get;
             set;
@@ -80,12 +81,12 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region ctor
-        public NameResolutionOption(string Comment = null, string DnsName = null, IPAddress DnsIp4Addr = null, IPAddress DnsIp6Addr = null)
+        public NameResolutionOption(List<string> Comments = null, string DnsName = null, IPAddress DnsIp4Addr = null, IPAddress DnsIp6Addr = null)
         {
             CustomContract.Requires<ArgumentException>(DnsIp4Addr == null || DnsIp4Addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork,   "dnsIp4Addr is not AddressFamily.InterNetwork");
             CustomContract.Requires<ArgumentException>(DnsIp6Addr == null || DnsIp6Addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6, "dnsIp6Addr is not AddressFamily.InterNetworkV6");
                     
-            this.Comment = Comment;
+            this.Comments = Comments ?? new List<string>();
             this.DnsName = DnsName;
             this.dnsIp4Addr = DnsIp4Addr;
             this.dnsIp6Addr = DnsIp6Addr;
@@ -108,7 +109,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
                         switch (item.Key)
                         {
                             case (ushort)NameResolutionOptionCode.CommentCode:
-                                option.Comment = UTF8Encoding.UTF8.GetString(item.Value);
+                                option.Comments.Add(UTF8Encoding.UTF8.GetString(item.Value));
                                 break;
                             case (ushort)NameResolutionOptionCode.DnsNameCode:
                                 option.DnsName = UTF8Encoding.UTF8.GetString(item.Value);
@@ -144,11 +145,13 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {               
             List<byte> ret = new List<byte>();
 
-            if (Comment != null)
+            if (Comments != null)
             {
-                byte[] comentValue = UTF8Encoding.UTF8.GetBytes(Comment);
-                if (comentValue.Length <= UInt16.MaxValue)
-                    ret.AddRange(ConvertOptionFieldToByte((ushort)NameResolutionOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                foreach (string comment in Comments) {
+                    byte[] comentValue = UTF8Encoding.UTF8.GetBytes(comment);
+                    if (comentValue.Length <= UInt16.MaxValue)
+                        ret.AddRange(ConvertOptionFieldToByte((ushort)NameResolutionOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                }
             }
 
             if (DnsName != null)

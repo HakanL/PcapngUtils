@@ -130,7 +130,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     Assert.AreEqual(interfaceBlock.InterfaceID, 1);
                     Assert.AreEqual(interfaceBlock.Timestamp.Seconds, 1427315514);
                     Assert.AreEqual(interfaceBlock.Timestamp.Microseconds, 468951);
-                    Assert.AreEqual(interfaceBlock.Options.Comment, "Counters provided by dumpcap");
+                    Assert.AreEqual(interfaceBlock.Options.Comments.Single(), "Counters provided by dumpcap");
                     Assert.AreEqual(interfaceBlock.Options.InterfaceDrop, 1);
                     Assert.AreEqual(interfaceBlock.Options.InterfaceReceived, 56);
                     Assert.AreEqual(interfaceBlock.Options.StartTime.Seconds, 1427315511);

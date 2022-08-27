@@ -166,9 +166,9 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
 
         #region fields & properies
         /// <summary>
-        /// A UTF-8 string containing a comment that is associated to the current block.
+        /// A list of UTF-8 strings containing comments that are associated to the current block.
         /// </summary>
-        public string Comment
+        public List<string> Comments
         {
             get;
             set;
@@ -314,12 +314,12 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region ctor
-        public InterfaceDescriptionOption(string Comment = null, string Name = null, string Description = null, IPAddress IPv4Address_v4 = null,
+        public InterfaceDescriptionOption(List<string> Comments = null, string Name = null, string Description = null, IPAddress IPv4Address_v4 = null,
             IPAddress_v6 IPv6Address = null, PhysicalAddress MacAddress = null, byte[] EuiAddress = null, long? Speed = null, byte? TimestampResolution = 6,
             int? TimeZone = null, byte[] Filter = null, string OperatingSystem = null, byte? FrameCheckSequence = null, long? TimeOffsetSeconds = null) 
         {
             CustomContract.Requires<ArgumentException>(EuiAddress == null || EuiAddress.Length == 8, "Invalid EuiAddress length. (Should be 8 bytes)");               
-            this.Comment = Comment;
+            this.Comments = Comments ?? new List<string>();
             this.Name = Name;
             this.Description = Description;
             this.IPv4Address = IPv4Address;
@@ -352,7 +352,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
                         switch (item.Key)
                         {
                             case (ushort)InterfaceDescriptionOptionCode.CommentCode:
-                                option.Comment = UTF8Encoding.UTF8.GetString(item.Value);
+                                option.Comments.Add(UTF8Encoding.UTF8.GetString(item.Value));
                                 break;
                             case (ushort)InterfaceDescriptionOptionCode.NameCode:
                                 option.Name = UTF8Encoding.UTF8.GetString(item.Value);
@@ -443,11 +443,14 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         { 
             List<byte> ret = new List<byte>();
 
-            if (Comment != null)
+            if (Comments != null)
             {
-                byte[] comentValue = UTF8Encoding.UTF8.GetBytes(Comment);
-                if (comentValue.Length <= UInt16.MaxValue)
-                    ret.AddRange(ConvertOptionFieldToByte((ushort)InterfaceDescriptionOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                foreach (string comment in Comments)
+                {
+                    byte[] comentValue = UTF8Encoding.UTF8.GetBytes(comment);
+                    if (comentValue.Length <= UInt16.MaxValue)
+                        ret.AddRange(ConvertOptionFieldToByte((ushort)InterfaceDescriptionOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                }
             }
 
             if (Name != null)

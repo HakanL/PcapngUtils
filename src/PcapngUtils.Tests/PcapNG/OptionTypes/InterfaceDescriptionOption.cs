@@ -23,7 +23,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {
             InterfaceDescriptionOption preOption = new InterfaceDescriptionOption();
             InterfaceDescriptionOption postOption;
-            preOption.Comment = "Test Comment";
+            preOption.Comments.Add("Test Comment");
             preOption.Description = "Test Description";
             preOption.EuiAddress = new byte[] { 0x00, 0x0A, 0xE6, 0xFF, 0xFE, 0x3E, 0xFD, 0xE1 };
             preOption.Filter = new byte[] { 5, 6, 7, 8 };
@@ -48,7 +48,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             }
 
             Assert.IsNotNull(postOption);
-            Assert.AreEqual(preOption.Comment, postOption.Comment);
+            Assert.AreEqual(preOption.Comments, postOption.Comments);
             Assert.AreEqual(preOption.Description, postOption.Description);
             Assert.AreEqual(preOption.EuiAddress, postOption.EuiAddress);
             Assert.AreEqual(preOption.Filter, postOption.Filter);

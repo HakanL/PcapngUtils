@@ -20,7 +20,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {
             SectionHeaderOption preOption = new SectionHeaderOption();
             SectionHeaderOption postOption;
-            preOption.Comment = "Test Comment";
+            preOption.Comments.Add("Test Comment");
             preOption.Hardware = "x86 Personal Computer";
             preOption.OperatingSystem = "Windows 7";
             preOption.UserApplication = "PcapngUtils";
@@ -34,7 +34,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             }
 
             Assert.IsNotNull(postOption);
-            Assert.AreEqual(preOption.Comment, postOption.Comment);
+            Assert.AreEqual(preOption.Comments, postOption.Comments);
             Assert.AreEqual(preOption.Hardware, postOption.Hardware);
             Assert.AreEqual(preOption.OperatingSystem, postOption.OperatingSystem);
             Assert.AreEqual(preOption.UserApplication, postOption.UserApplication);

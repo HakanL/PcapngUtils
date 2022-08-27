@@ -57,7 +57,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     {
                         Assert.AreEqual(prePacketBlock.NameResolutionRecords[i], postPacketBlock.NameResolutionRecords[i]);
                     }
-                    Assert.AreEqual(prePacketBlock.Options.Comment, postPacketBlock.Options.Comment);
+                    Assert.AreEqual(prePacketBlock.Options.Comments, postPacketBlock.Options.Comments);
                     Assert.AreEqual(prePacketBlock.Options.DnsName, postPacketBlock.Options.DnsName);
                     Assert.AreEqual(prePacketBlock.Options.DnsIp4Addr, postPacketBlock.Options.DnsIp4Addr);
                     Assert.AreEqual(prePacketBlock.Options.DnsIp6Addr, postPacketBlock.Options.DnsIp6Addr);

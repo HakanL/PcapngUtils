@@ -51,7 +51,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     Assert.AreEqual(prePacketBlock.PacketLength, postPacketBlock.PacketLength);
                     Assert.AreEqual(prePacketBlock.PositionInStream, postPacketBlock.PositionInStream);
                     Assert.AreEqual(prePacketBlock.Seconds, postPacketBlock.Seconds);
-                    Assert.AreEqual(prePacketBlock.Options.Comment, postPacketBlock.Options.Comment);
+                    Assert.AreEqual(prePacketBlock.Options.Comments, postPacketBlock.Options.Comments);
                     Assert.AreEqual(prePacketBlock.Options.Hash, postPacketBlock.Options.Hash);
                     Assert.AreEqual(prePacketBlock.Options.PacketFlag, postPacketBlock.Options.PacketFlag);
                 }

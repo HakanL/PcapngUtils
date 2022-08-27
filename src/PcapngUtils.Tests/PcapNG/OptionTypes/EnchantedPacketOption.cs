@@ -22,7 +22,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {
             EnhancedPacketOption preOption = new EnhancedPacketOption();
             EnhancedPacketOption postOption;
-            preOption.Comment = "Test Comment";
+            preOption.Comments.Add("Test Comment");
             preOption.DropCount = 25;
             byte[] md5Hash = { 3, 87, 248, 225, 163, 56, 121, 102, 219, 226, 164, 68, 165, 51, 9, 177, 59 };
             preOption.Hash = new HashBlock(md5Hash);
@@ -37,7 +37,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             }
 
             Assert.IsNotNull(postOption);
-            Assert.AreEqual(preOption.Comment, postOption.Comment);
+            Assert.AreEqual(preOption.Comments, postOption.Comments);
             Assert.AreEqual(preOption.DropCount, postOption.DropCount);
             Assert.AreEqual(preOption.Hash.Algorithm, postOption.Hash.Algorithm);
             Assert.AreEqual(preOption.Hash.Value, postOption.Hash.Value);

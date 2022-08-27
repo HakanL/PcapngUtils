@@ -21,7 +21,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {
             NameResolutionOption preOption = new NameResolutionOption();
             NameResolutionOption postOption;
-            preOption.Comment = "Test Comment";
+            preOption.Comments.Add("Test Comment");
             preOption.DnsName = "Dns Name";
             preOption.DnsIp4Addr = new IPAddress(new byte[] { 127, 0, 0, 1 });
             preOption.DnsIp6Addr = new IPAddress(new byte[] { 0x20, 0x01, 0x0d, 0x0db, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x14, 0x28, 0x57, 0xab });
@@ -37,7 +37,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             }
 
             Assert.IsNotNull(postOption);
-            Assert.AreEqual(preOption.Comment, postOption.Comment);
+            Assert.AreEqual(preOption.Comments, postOption.Comments);
             Assert.AreEqual(preOption.DnsName, postOption.DnsName);
             Assert.AreEqual(preOption.DnsIp4Addr, postOption.DnsIp4Addr);
             Assert.AreEqual(preOption.DnsIp6Addr, postOption.DnsIp6Addr);
