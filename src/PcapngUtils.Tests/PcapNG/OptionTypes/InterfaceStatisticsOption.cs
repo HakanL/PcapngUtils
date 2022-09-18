@@ -22,7 +22,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {
             InterfaceStatisticsOption preOption = new InterfaceStatisticsOption();
             InterfaceStatisticsOption postOption;
-            preOption.Comment = "Test Comment";
+            preOption.Comments.Add("Test Comment");
             preOption.DeliveredToUser = 25;
             preOption.EndTime = new TimestampHelper(new byte[] { 1, 0, 0, 0, 2, 0, 0, 0 }, false);
             preOption.StartTime = new TimestampHelper(new byte[] { 1, 0, 0, 3, 2, 0, 0, 4 }, false);
@@ -41,7 +41,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             }
 
             Assert.IsNotNull(postOption);
-            Assert.AreEqual(preOption.Comment, postOption.Comment);
+            Assert.AreEqual(preOption.Comments, postOption.Comments);
             Assert.AreEqual(preOption.DeliveredToUser, postOption.DeliveredToUser);
             Assert.AreEqual(preOption.EndTime.Seconds, postOption.EndTime.Seconds);
             Assert.AreEqual(preOption.EndTime.Microseconds, postOption.EndTime.Microseconds);

@@ -45,7 +45,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     Assert.AreEqual(preStatisticBlock.BlockType, postStatisticBlock.BlockType);
                     Assert.AreEqual(preStatisticBlock.InterfaceID, postStatisticBlock.InterfaceID);
                     Assert.AreEqual(preStatisticBlock.Timestamp, postStatisticBlock.Timestamp);
-                    Assert.AreEqual(preStatisticBlock.Options.Comment, postStatisticBlock.Options.Comment);
+                    Assert.AreEqual(preStatisticBlock.Options.Comments, postStatisticBlock.Options.Comments);
                     Assert.AreEqual(preStatisticBlock.Options.DeliveredToUser, postStatisticBlock.Options.DeliveredToUser);
                     Assert.AreEqual(preStatisticBlock.Options.EndTime, postStatisticBlock.Options.EndTime);
                     Assert.AreEqual(preStatisticBlock.Options.StartTime, postStatisticBlock.Options.StartTime);

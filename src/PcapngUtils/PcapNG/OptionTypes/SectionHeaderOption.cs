@@ -24,9 +24,9 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
 
         #region fields & properies
         /// <summary>
-        /// A UTF-8 string containing a comment that is associated to the current block.
+        /// A list of UTF-8 strings containing comments that are associated to the current block.
         /// </summary>
-        public string Comment
+        public List<string> Comments
         {
             get;
             set;
@@ -61,9 +61,9 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region ctor
-        public SectionHeaderOption(string Comment = null, string Hardware = null, string OperatingSystem = null, string UserApplication = null)
+        public SectionHeaderOption(List<string> Comments = null, string Hardware = null, string OperatingSystem = null, string UserApplication = null)
         {
-            this.Comment = Comment;
+            this.Comments = Comments ?? new List<string>();
             this.Hardware = Hardware;
             this.OperatingSystem = OperatingSystem;
             this.UserApplication = UserApplication;
@@ -86,7 +86,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
                         switch (item.Key)
                         {
                             case (ushort)SectionHeaderOptionCode.CommentCode:
-                                option.Comment = UTF8Encoding.UTF8.GetString(item.Value);
+                                option.Comments.Add(UTF8Encoding.UTF8.GetString(item.Value));
                                 break;
                             case (ushort)SectionHeaderOptionCode.HardwareCode:
                                 option.Hardware = UTF8Encoding.UTF8.GetString(item.Value);
@@ -117,11 +117,14 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
 
             List<byte> ret = new List<byte>();
 
-            if (Comment != null)
+            if (Comments != null)
             {
-                byte[] comentValue = UTF8Encoding.UTF8.GetBytes(Comment);
-                if (comentValue.Length <= UInt16.MaxValue)
-                    ret.AddRange(ConvertOptionFieldToByte((ushort)SectionHeaderOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                foreach (var comment in Comments)
+                {
+                    byte[] comentValue = UTF8Encoding.UTF8.GetBytes(comment);
+                    if (comentValue.Length <= UInt16.MaxValue)
+                        ret.AddRange(ConvertOptionFieldToByte((ushort)SectionHeaderOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                }
             }
 
             if (Hardware != null)

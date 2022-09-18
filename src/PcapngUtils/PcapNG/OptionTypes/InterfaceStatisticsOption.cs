@@ -30,9 +30,9 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
 
         #region fields & properies
         /// <summary>
-        /// A UTF-8 string containing a comment that is associated to the current block.
+        /// A list of UTF-8 strings containing comments that are associated to the current block.
         /// </summary>
-        public string Comment
+        public List<string> Comments
         {
             get;
             set;
@@ -114,10 +114,10 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region ctor
-        public InterfaceStatisticsOption(string Comment = null, TimestampHelper StartTime = null, TimestampHelper EndTime = null, long? InterfaceReceived = null,
+        public InterfaceStatisticsOption(List<string> Comments = null, TimestampHelper StartTime = null, TimestampHelper EndTime = null, long? InterfaceReceived = null,
             long? InterfaceDrop = null, long? FilterAccept = null, long? SystemDrop = null, long? DeliveredToUser =null) 
         {
-            this.Comment = Comment;
+            this.Comments = Comments ?? new List<string>();
             this.StartTime = StartTime;
             this.EndTime = EndTime;
             this.InterfaceReceived = InterfaceReceived;
@@ -145,7 +145,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
                         switch (item.Key)
                         {
                             case (ushort)InterfaceStatisticsOptionCode.CommentCode:
-                                option.Comment = UTF8Encoding.UTF8.GetString(item.Value);
+                                option.Comments.Add(UTF8Encoding.UTF8.GetString(item.Value));
                                 break;
                             case (ushort)InterfaceStatisticsOptionCode.StartTimeCode:
                                 if (item.Value.Length == 8)
@@ -209,11 +209,14 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         {    
             List<byte> ret = new List<byte>();
 
-            if (Comment != null)
+            if (Comments != null)
             {
-                byte[] comentValue = UTF8Encoding.UTF8.GetBytes(Comment);
-                if (comentValue.Length <= UInt16.MaxValue)
-                    ret.AddRange(ConvertOptionFieldToByte((ushort)InterfaceStatisticsOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                foreach (string comment in Comments)
+                {
+                    byte[] comentValue = UTF8Encoding.UTF8.GetBytes(comment);
+                    if (comentValue.Length <= UInt16.MaxValue)
+                        ret.AddRange(ConvertOptionFieldToByte((ushort)InterfaceStatisticsOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                }
             }
 
             if (StartTime != null)

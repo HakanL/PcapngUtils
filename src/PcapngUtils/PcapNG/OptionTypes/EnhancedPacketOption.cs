@@ -26,9 +26,9 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
 
         #region fields & properies
         /// <summary>
-        /// A UTF-8 string containing a comment that is associated to the current block.
+        /// A list of UTF-8 strings containing comments that are associated to the current block.
         /// </summary>
-        public string Comment
+        public List<string> Comments
         {
             get;
             set;
@@ -69,9 +69,9 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region ctor
-        public EnhancedPacketOption(string Comment = null, PacketBlockFlags PacketFlag = null, long? DropCount = null, HashBlock Hash = null)
+        public EnhancedPacketOption(List<string> Comments = null, PacketBlockFlags PacketFlag = null, long? DropCount = null, HashBlock Hash = null)
         {
-            this.Comment = Comment;
+            this.Comments = Comments ?? new List<string>();
             this.PacketFlag = PacketFlag;
             this.DropCount = DropCount;
             this.Hash = Hash;
@@ -94,7 +94,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
                         switch (item.Key)
                         {
                             case (ushort)EnhancedPacketOptionCode.CommentCode:
-                                option.Comment = UTF8Encoding.UTF8.GetString(item.Value);
+                                option.Comments.Add(UTF8Encoding.UTF8.GetString(item.Value));
                                 break;
                             case (ushort)EnhancedPacketOptionCode.PacketFlagCode:
                                 if (item.Value.Length == 4)
@@ -134,11 +134,14 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
 
             List<byte> ret = new List<byte>();
 
-            if (Comment != null)
+            if (Comments != null)
             {
-                byte[] comentValue = UTF8Encoding.UTF8.GetBytes(Comment);
-                if (comentValue.Length <= UInt16.MaxValue)
-                    ret.AddRange(ConvertOptionFieldToByte((ushort)EnhancedPacketOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                foreach (string comment in Comments)
+                {
+                    byte[] comentValue = UTF8Encoding.UTF8.GetBytes(comment);
+                    if (comentValue.Length <= UInt16.MaxValue)
+                        ret.AddRange(ConvertOptionFieldToByte((ushort)EnhancedPacketOptionCode.CommentCode, comentValue, reverseByteOrder, ActionOnException));
+                }
             }
 
             if (PacketFlag != null)
