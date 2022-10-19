@@ -35,7 +35,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         /// <summary>
         /// SnapLen: maximum number of bytes dumped from each packet. The portion of each packet that exceeds this value will not be stored in the file. 
         /// </summary>
-        public int SnapLength
+        public uint SnapLength
         {
             get;
             set;
@@ -86,7 +86,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                         throw new ArgumentException(string.Format("[InterfaceDescriptionBlock.ctor] invalid LinkTypes: {0}, block begin on position {1} ", linktype, positionInStream));
                     LinkTypes linkType = (LinkTypes)linktype;
                     binaryReader.ReadUInt16();	// Reserved field.
-                    int snapLength = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
+                    uint snapLength = binaryReader.ReadUInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     InterfaceDescriptionOption Options = InterfaceDescriptionOption.Parse(binaryReader, baseBlock.ReverseByteOrder, ActionOnException);
                     InterfaceDescriptionBlock interfaceBlock = new InterfaceDescriptionBlock(linkType, snapLength, Options, positionInStream);
                     return interfaceBlock;
@@ -100,7 +100,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         /// Description Block must be defined before any other block that uses it; therefore, this block is usually placed immediately after 
         /// the Section Header Block.
         /// </summary>          
-        public InterfaceDescriptionBlock(LinkTypes LinkType, int SnapLength, InterfaceDescriptionOption Options, long PositionInStream = 0)
+        public InterfaceDescriptionBlock(LinkTypes LinkType, uint SnapLength, InterfaceDescriptionOption Options, long PositionInStream = 0)
         {
             CustomContract.Requires<ArgumentNullException>(Options != null, "Options cannot be null");
 
