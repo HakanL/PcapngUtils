@@ -129,8 +129,8 @@ namespace Haukcode.PcapngUtils.PcapNG
                     {
                         throw new ArgumentOutOfRangeException(string.Format("[PcapNGWriter.WritePacket] Packet interface ID: {0} is greater than InterfaceDescriptions count: {1}", abstractBlock.AssociatedInterfaceID.Value, header.InterfaceDescriptions.Count));
                     }
-                    int maxLength = header.InterfaceDescriptions[abstractBlock.AssociatedInterfaceID.Value].SnapLength;
-                    if (data.Length > maxLength)
+                    uint maxLength = header.InterfaceDescriptions[abstractBlock.AssociatedInterfaceID.Value].SnapLength;
+                    if (maxLength != 0 && data.Length > maxLength)
                     {
                         throw new ArgumentOutOfRangeException(string.Format("[PcapNGWriter.WritePacket] block length: {0} is greater than MaximumCaptureLength: {1}",data.Length,maxLength));
                             
