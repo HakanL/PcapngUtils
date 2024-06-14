@@ -43,7 +43,11 @@ namespace Haukcode.PcapngUtils.PcapNG
             get { return this.headersWithInterface.AsReadOnly(); }
         }
 
-        public long Position => this.binaryReader.BaseStream.Position;
+        public long Position
+        {
+            get => this.binaryReader.BaseStream.Position;
+            set => this.binaryReader.BaseStream.Position = value;
+        }
 
         public bool MoreAvailable => this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length;
 

@@ -31,7 +31,7 @@ namespace Haukcode.PcapngUtils.Common
         /// <summary>
         /// Current file position
         /// </summary>
-        long Position { get; }
+        long Position { get; set; }
 
         /// <summary>
         /// Rewind to read from the beginning again

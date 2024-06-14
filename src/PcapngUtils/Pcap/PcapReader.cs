@@ -32,11 +32,15 @@ namespace Haukcode.PcapngUtils.Pcap
         private Stream stream;
         private BinaryReader binaryReader;
         private readonly object syncRoot = new object();
-        private long BasePosition = 0;
+        private long startPosition = 0;
 
         public SectionHeader Header { get; private set; }
 
-        public long Position => this.binaryReader.BaseStream.Position;
+        public long Position
+        {
+            get => this.binaryReader.BaseStream.Position;
+            set => this.binaryReader.BaseStream.Position = value;
+        }
 
         public bool MoreAvailable => this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length;
 
@@ -61,9 +65,9 @@ namespace Haukcode.PcapngUtils.Pcap
             CustomContract.Requires<Exception>(stream.CanRead == true, "cannot read stream");
 
             this.stream = stream;
-            binaryReader = new BinaryReader(stream);
-            Header = SectionHeader.Parse(binaryReader);
-            BasePosition = binaryReader.BaseStream.Position;
+            this.binaryReader = new BinaryReader(stream);
+            Header = SectionHeader.Parse(this.binaryReader);
+            this.startPosition = this.binaryReader.BaseStream.Position;
             Rewind();
         }
 
@@ -140,7 +144,7 @@ namespace Haukcode.PcapngUtils.Pcap
             CustomContract.Requires<ArgumentNullException>(Header != null, "Header cannot be null");
             lock (this.syncRoot)
             {
-                this.binaryReader.BaseStream.Position = this.BasePosition;
+                this.binaryReader.BaseStream.Position = this.startPosition;
             }
         }
 
