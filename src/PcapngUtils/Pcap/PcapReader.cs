@@ -41,6 +41,8 @@ namespace Haukcode.PcapngUtils.Pcap
             get => this.binaryReader.BaseStream.Position;
             set => this.binaryReader.BaseStream.Position = value;
         }
+        
+        public long Length => this.binaryReader.BaseStream.Length;
 
         public bool MoreAvailable => this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length;
 
