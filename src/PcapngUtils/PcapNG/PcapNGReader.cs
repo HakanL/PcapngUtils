@@ -49,6 +49,8 @@ namespace Haukcode.PcapngUtils.PcapNG
             set => this.binaryReader.BaseStream.Position = value;
         }
 
+        public long Length => this.binaryReader.BaseStream.Length;
+
         public bool MoreAvailable => this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length;
 
         private readonly object syncRoot = new object();
@@ -242,3 +244,4 @@ namespace Haukcode.PcapngUtils.PcapNG
         }
     }
 }
+
