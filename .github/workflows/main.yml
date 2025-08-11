@@ -55,6 +55,7 @@ jobs:
     ## Publish and Tag
     - name: Publish NuGet
       run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_KEY }}
+      if: github.ref == 'refs/heads/master'
     - name: Tag
       run: |
         git tag "v${PACKAGE_VERSION}"
