@@ -34,6 +34,11 @@ namespace Haukcode.PcapngUtils.Common
         long Position { get; set; }
 
         /// <summary>
+        /// Length of file
+        /// </summary>
+        long Length { get; }
+
+        /// <summary>
         /// Rewind to read from the beginning again
         /// </summary>
         void Rewind();
