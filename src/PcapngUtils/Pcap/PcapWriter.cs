@@ -125,9 +125,15 @@ namespace Haukcode.PcapngUtils.Pcap
         protected override void Dispose(bool disposing)
         {
             if (binaryWriter != null)
+            {
+                binaryWriter.Flush();
                 binaryWriter.Close();
+            }
             if (stream != null)
+            {
+                stream.Flush();
                 stream.Close();
+            }
         }
 
         #endregion      

@@ -46,8 +46,8 @@ namespace Haukcode.PcapngUtils.PcapNG
             CustomContract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(path), "path cannot be null or empty");
             CustomContract.Requires<ArgumentException>(!File.Exists(path), "file exists");
             HeaderWithInterfacesDescriptions header = HeaderWithInterfacesDescriptions.CreateEmptyHeadeWithInterfacesDescriptions(false);
-            Initialize(new FileStream(path, FileMode.Create), new List<HeaderWithInterfacesDescriptions>(){header}) ;
-        }  
+            Initialize(new FileStream(path, FileMode.Create), new List<HeaderWithInterfacesDescriptions>() { header });
+        }
 
         public PcapNGWriter(Stream stream, bool reverseByteOrder = false)
         {
@@ -73,30 +73,30 @@ namespace Haukcode.PcapngUtils.PcapNG
 
             CustomContract.Requires<ArgumentException>(headersWithInterface.Count >= 1, "headersWithInterface list is empty");
 
-            Initialize(stream,  headersWithInterface);
+            Initialize(stream, headersWithInterface);
         }
 
         private void Initialize(Stream stream, List<HeaderWithInterfacesDescriptions> headersWithInterface)
-         {                     
-             CustomContract.Requires<ArgumentNullException>(stream != null, "stream cannot be null");
-             CustomContract.Requires<Exception>(stream.CanWrite == true, "Cannot write to stream");
-             CustomContract.Requires<ArgumentNullException>(headersWithInterface != null, "headersWithInterface list cannot be null");
+        {
+            CustomContract.Requires<ArgumentNullException>(stream != null, "stream cannot be null");
+            CustomContract.Requires<Exception>(stream.CanWrite == true, "Cannot write to stream");
+            CustomContract.Requires<ArgumentNullException>(headersWithInterface != null, "headersWithInterface list cannot be null");
 
-             CustomContract.Requires<ArgumentException>(headersWithInterface.Count >= 1, "headersWithInterface list is empty");
+            CustomContract.Requires<ArgumentException>(headersWithInterface.Count >= 1, "headersWithInterface list is empty");
 
-             this.headersWithInterface = headersWithInterface;
-             this.stream = stream;
-             binaryWriter = new BinaryWriter(stream);
-             Action<Exception> ReThrowException = (exc) =>
-             {
-                 ExceptionDispatchInfo.Capture(exc).Throw();
-             };
-             foreach (var header in headersWithInterface)
-             {
-                 binaryWriter.Write(header.ConvertToByte(header.Header.ReverseByteOrder, ReThrowException));          
-             }
-               
-         }           
+            this.headersWithInterface = headersWithInterface;
+            this.stream = stream;
+            binaryWriter = new BinaryWriter(stream);
+            Action<Exception> ReThrowException = (exc) =>
+            {
+                ExceptionDispatchInfo.Capture(exc).Throw();
+            };
+            foreach (var header in headersWithInterface)
+            {
+                binaryWriter.Write(header.ConvertToByte(header.Header.ReverseByteOrder, ReThrowException));
+            }
+
+        }
         #endregion
         /// <summary>
         /// Close stream, dispose members
@@ -110,10 +110,10 @@ namespace Haukcode.PcapngUtils.PcapNG
         {
             try
             {
-                AbstractBlock abstractBlock =null;
+                AbstractBlock abstractBlock = null;
                 if (packet is AbstractBlock)
                 {
-                    abstractBlock = packet as AbstractBlock;                     
+                    abstractBlock = packet as AbstractBlock;
                 }
                 else
                 {
@@ -132,8 +132,8 @@ namespace Haukcode.PcapngUtils.PcapNG
                     uint maxLength = header.InterfaceDescriptions[abstractBlock.AssociatedInterfaceID.Value].SnapLength;
                     if (maxLength != 0 && data.Length > maxLength)
                     {
-                        throw new ArgumentOutOfRangeException(string.Format("[PcapNGWriter.WritePacket] block length: {0} is greater than MaximumCaptureLength: {1}",data.Length,maxLength));
-                            
+                        throw new ArgumentOutOfRangeException(string.Format("[PcapNGWriter.WritePacket] block length: {0} is greater than MaximumCaptureLength: {1}", data.Length, maxLength));
+
                     }
                 }
                 lock (syncRoot)
@@ -152,7 +152,7 @@ namespace Haukcode.PcapngUtils.PcapNG
             CustomContract.Requires<ArgumentNullException>(headersWithInterface != null, "headersWithInterface  cannot be null");
             CustomContract.Requires<ArgumentNullException>(headersWithInterface.Header != null, "headersWithInterface.Header  cannot be null");
 
-            byte [] data = headersWithInterface.ConvertToByte(headersWithInterface.Header.ReverseByteOrder, OnException);
+            byte[] data = headersWithInterface.ConvertToByte(headersWithInterface.Header.ReverseByteOrder, OnException);
             try
             {
                 lock (syncRoot)
@@ -172,11 +172,17 @@ namespace Haukcode.PcapngUtils.PcapNG
         protected override void Dispose(bool disposing)
         {
             if (binaryWriter != null)
+            {
+                binaryWriter.Flush();
                 binaryWriter.Close();
+            }
             if (stream != null)
+            {
+                stream.Flush();
                 stream.Close();
+            }
         }
 
         #endregion      
-    }  
+    }
 }
