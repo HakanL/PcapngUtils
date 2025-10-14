@@ -127,13 +127,13 @@ namespace Haukcode.PcapngUtils.Pcap
             if (binaryWriter != null)
             {
                 binaryWriter.Flush();
-                binaryWriter.Close();
-            }
-            if (stream != null)
-            {
                 stream.Flush();
-                stream.Close();
+                binaryWriter.Close();
+                stream = null;
+                binaryWriter = null;
             }
+
+            stream?.Close();
         }
 
         #endregion      
