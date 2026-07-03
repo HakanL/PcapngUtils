@@ -35,6 +35,7 @@ namespace Haukcode.PcapngUtils.PcapNG
         private Stream stream;
         private long basePosition = 0;
         private bool ReverseByteOrder = false;
+        private long tsresol = 6;
 
         private List<HeaderWithInterfacesDescriptions> headersWithInterface = new List<HeaderWithInterfacesDescriptions>();
 
@@ -84,7 +85,7 @@ namespace Haukcode.PcapngUtils.PcapNG
             var preHeadersWithInterface = new List<KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>>();
             while (this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length && this.basePosition == 0)
             {
-                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException);
+                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException, tsresol);
                 if (block == null)
                     break;
 
@@ -101,6 +102,8 @@ namespace Haukcode.PcapngUtils.PcapNG
                     case BaseBlock.Types.InterfaceDescription:
                         if (block is InterfaceDescriptionBlock)
                         {
+                            var idb = block as InterfaceDescriptionBlock;
+                            if (idb.Options.TimestampResolution != null) tsresol = (long)idb.Options.TimestampResolution;
                             InterfaceDescriptionBlock interfaceBlock = block as InterfaceDescriptionBlock;
                             if (preHeadersWithInterface.Any())
                             {
@@ -207,7 +210,7 @@ namespace Haukcode.PcapngUtils.PcapNG
                 lock (this.syncRoot)
                 {
                     prevPosition = this.binaryReader.BaseStream.Position;
-                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException);
+                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException, tsresol);
                 }
 
                 if (block == null)

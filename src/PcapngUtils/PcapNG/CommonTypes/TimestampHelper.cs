@@ -51,6 +51,25 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             Seconds = (uint)(timestamp / 1000000);
             Microseconds = (uint)(timestamp % 1000000);
         }
+        
+        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder, long tsresol)
+        {
+            CustomContract.Requires<ArgumentNullException>(timestampAsByte != null, "timestampAsByte cannot be null");
+            CustomContract.Requires<ArgumentException>(timestampAsByte.Length == 8, "timestamp must have length = 8");
+
+            TimestampHigh = (BitConverter.ToUInt32(timestampAsByte.Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
+            TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
+
+            long ts = ((long)TimestampHigh << 32) | TimestampLow;
+            bool isPwr2 = (tsresol & 0b10000000) > 0;
+            tsresol = tsresol & 0b01111111;
+            // Note: tsresol usually is 6 or 9 to represent microseconds or nanoseconds
+            double second = isPwr2 ? ts * Math.Pow(2, -tsresol) : ts * Math.Pow(10, -tsresol);
+            var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var dateTime = unixEpoch.AddSeconds(second);
+            Seconds = (uint)(dateTime - unixEpoch).TotalSeconds;
+            Microseconds = (uint)((dateTime - unixEpoch).TotalMilliseconds % 1000 * 1000);
+        }
 
         public TimestampHelper(uint seconds, uint microseconds)
         {

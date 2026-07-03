@@ -13,7 +13,8 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
     public static class AbstractBlockFactory
     {
         #region method
-        public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException)
+        
+        public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException, long tsresol)
         {
             CustomContract.Requires<ArgumentNullException>(binaryReader != null, "binaryReader cannot be null");
             try
@@ -41,7 +42,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                         block = InterfaceStatisticsBlock.Parse(baseblock, ActionOnException);
                         break;
                     case BaseBlock.Types.EnhancedPacket:
-                        block = EnhancedPacketBlock.Parse(baseblock, ActionOnException);
+                        block = EnhancedPacketBlock.Parse(baseblock, ActionOnException, tsresol);
                         break;
                     default:                             
                         break;
