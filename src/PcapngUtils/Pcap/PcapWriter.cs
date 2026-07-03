@@ -38,7 +38,10 @@ namespace Haukcode.PcapngUtils.Pcap
             CustomContract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(path), "path cannot be null or empty");
             CustomContract.Requires<ArgumentException>(!File.Exists(path), "file exists");
             SectionHeader sh = SectionHeader.CreateEmptyHeader(nanoseconds, reverseByteOrder);
-            Initialize(new FileStream(path, FileMode.Create), sh);
+            // 256 KB buffer instead of the 4 KB default: pcap capture writes sequentially at a
+            // steady rate, so a larger buffer means far fewer write syscalls (and fewer small
+            // flash writes on SD/eMMC-backed storage).
+            Initialize(new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 256 * 1024), sh);
         }
 
         public PcapWriter(Stream stream, bool nanoseconds = false, bool reverseByteOrder = false)
@@ -54,7 +57,7 @@ namespace Haukcode.PcapngUtils.Pcap
             CustomContract.Requires<ArgumentException>(!File.Exists(path), "file exists");
             CustomContract.Requires<ArgumentNullException>(header != null, "SectionHeader cannot be null");
 
-            Initialize(new FileStream(path, FileMode.Create), header);
+            Initialize(new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 256 * 1024), header);
         }
 
         public PcapWriter(Stream stream, SectionHeader header)

@@ -51,7 +51,9 @@ namespace Haukcode.PcapngUtils.Pcap
             CustomContract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(path), "path cannot be null or empty");
             CustomContract.Requires<ArgumentException>(File.Exists(path), "file must exists");
 
-            Initialize(File.OpenRead(path));
+            // 256 KB buffer with SequentialScan instead of the 4 KB default: playback reads the
+            // capture front-to-back, so fewer, larger reads cut syscalls on the hot read path.
+            Initialize(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 256 * 1024, FileOptions.SequentialScan));
         }
 
         public PcapReader(Stream s)
