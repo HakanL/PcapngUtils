@@ -20,7 +20,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             try
             {
                 BaseBlock baseblock = new BaseBlock(binaryReader, bytesReorder);
-                AbstractBlock block = null; ;
+                AbstractBlock block = null;
                 switch (baseblock.BlockType)
                 {
                     case BaseBlock.Types.SectionHeader:
