@@ -26,7 +26,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, 6);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, new Dictionary<int, long>());
                     Assert.IsNotNull(block);
                     preStatisticBlock = block as InterfaceStatisticsBlock;
                     Assert.IsNotNull(preStatisticBlock);
@@ -37,7 +37,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, 6);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, new Dictionary<int, long>());
                     Assert.IsNotNull(block);
                     postStatisticBlock = block as InterfaceStatisticsBlock;
                     Assert.IsNotNull(postStatisticBlock);

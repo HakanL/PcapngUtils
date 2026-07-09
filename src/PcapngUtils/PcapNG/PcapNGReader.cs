@@ -35,7 +35,8 @@ namespace Haukcode.PcapngUtils.PcapNG
         private Stream stream;
         private long basePosition = 0;
         private bool ReverseByteOrder = false;
-        private long tsresol = 6;
+        int interfaceId = 0;
+        private readonly Dictionary<int, long> tsresols = new Dictionary<int, long>();
 
         private List<HeaderWithInterfacesDescriptions> headersWithInterface = new List<HeaderWithInterfacesDescriptions>();
 
@@ -85,7 +86,7 @@ namespace Haukcode.PcapngUtils.PcapNG
             var preHeadersWithInterface = new List<KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>>();
             while (this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length && this.basePosition == 0)
             {
-                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException, tsresol);
+                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException, tsresols);
                 if (block == null)
                     break;
 
@@ -98,12 +99,14 @@ namespace Haukcode.PcapngUtils.PcapNG
                             preHeadersWithInterface.Add(new KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>(headerBlock, new List<InterfaceDescriptionBlock>()));
                         }
                         break;
-
+                        
                     case BaseBlock.Types.InterfaceDescription:
                         if (block is InterfaceDescriptionBlock)
                         {
                             var idb = block as InterfaceDescriptionBlock;
-                            if (idb.Options.TimestampResolution != null) tsresol = (long)idb.Options.TimestampResolution;
+                            long tsresol = (long)(idb.Options.TimestampResolution ?? 6);
+                            tsresols[interfaceId] = tsresol;
+                            interfaceId++;
                             InterfaceDescriptionBlock interfaceBlock = block as InterfaceDescriptionBlock;
                             if (preHeadersWithInterface.Any())
                             {
@@ -210,7 +213,8 @@ namespace Haukcode.PcapngUtils.PcapNG
                 lock (this.syncRoot)
                 {
                     prevPosition = this.binaryReader.BaseStream.Position;
-                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException, tsresol);
+                    Console.WriteLine(tsresols);
+                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException, tsresols);
                 }
 
                 if (block == null)

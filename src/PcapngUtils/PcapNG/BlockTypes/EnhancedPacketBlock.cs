@@ -159,18 +159,23 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             }
         }
         
-        public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, long tsresol)
+        public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
             CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.EnhancedPacket, "Invalid packet type");
-
+            
+            long tsresol = 6;
             long positionInStream = baseBlock.PositionInStream;
             using (Stream stream = new MemoryStream(baseBlock.Body))
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
+                    if (tsresols.TryGetValue(interfaceID, out long value))
+                    {
+                        tsresol = value;
+                    }
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     var timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder, tsresol);
                     int capturedLength = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);

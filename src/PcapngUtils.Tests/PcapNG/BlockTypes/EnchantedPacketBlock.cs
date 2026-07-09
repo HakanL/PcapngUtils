@@ -27,7 +27,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, 6);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, new Dictionary<int, long>());
                     Assert.IsNotNull(block);
                     prePacketBlock = block as EnhancedPacketBlock;
                     Assert.IsNotNull(prePacketBlock);
@@ -38,7 +38,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, 6);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, new Dictionary<int, long>());
                     Assert.IsNotNull(block);
                     postPacketBlock = block as EnhancedPacketBlock;
                     Assert.IsNotNull(postPacketBlock);
@@ -85,7 +85,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, 6);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, new Dictionary<int, long>());
                     Assert.IsNotNull(block);
                     prePacketBlock = block as EnhancedPacketBlock;
                     Assert.IsNotNull(prePacketBlock);
@@ -96,7 +96,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, 6);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, new Dictionary<int, long>());
                     Assert.IsNotNull(block);
                     postPacketBlock = block as EnhancedPacketBlock;
                     Assert.IsNotNull(postPacketBlock);

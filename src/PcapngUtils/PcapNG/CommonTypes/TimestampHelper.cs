@@ -61,13 +61,14 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
 
             ulong ts = ((ulong)TimestampHigh << 32) | TimestampLow;
-            bool isPwr2 = (tsresol & 0b10000000) > 0;
-            tsresol = tsresol & 0b01111111;
+            byte tsresolByte = unchecked((byte)tsresol);
+            bool isPwr2 = (tsresolByte & 0b10000000) > 0;
+            int exponent  = tsresolByte & 0b01111111;
             // Note: tsresol usually is 6 or 9 to represent microseconds or nanoseconds
-            double second = isPwr2 ? ts * Math.Pow(2, -tsresol) : ts * Math.Pow(10, -tsresol);
-            var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            Seconds = (uint)Math.Floor(second);
-            Microseconds = (uint)Math.Round((second - Seconds) * 1_000_000);
+            double second = isPwr2 ? ts * Math.Pow(2, -exponent) : ts * Math.Pow(10, -exponent);
+            long totalMicros = (long)Math.Round(second * 1_000_000);
+            Seconds = (uint)(totalMicros / 1_000_000);
+            Microseconds = (uint)(totalMicros % 1_000_000);
         }
 
         public TimestampHelper(uint seconds, uint microseconds)
