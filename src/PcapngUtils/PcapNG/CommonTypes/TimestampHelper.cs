@@ -39,17 +39,9 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
         #endregion
 
         #region ctor
-        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder)
+        
+        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder) : this(timestampAsByte, reverseByteOrder, 6)
         {
-            CustomContract.Requires<ArgumentNullException>(timestampAsByte != null, "timestampAsByte cannot be null");
-            CustomContract.Requires<ArgumentException>(timestampAsByte.Length == 8, "timestamp must have length = 8");
-
-            TimestampHigh = (BitConverter.ToUInt32(timestampAsByte.Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
-            TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
-
-            long timestamp = (TimestampHigh * 4294967296) + TimestampLow;
-            Seconds = (uint)(timestamp / 1000000);
-            Microseconds = (uint)(timestamp % 1000000);
         }
         
         public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder, long tsresol)
@@ -65,9 +57,10 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             byte tsresolByte = (byte)tsresol;
             bool isPwr2 = (tsresolByte & 0b10000000) > 0;
             int exponent  = tsresolByte & 0b01111111;
+            CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 28, "tsresol exponent is too large to convert timestamp to microseconds safely");
             // Note: tsresol usually is 6 or 9 to represent microseconds or nanoseconds
-            double second = isPwr2 ? ts * Math.Pow(2, -exponent) : ts * Math.Pow(10, -exponent);
-            long totalMicros = (long)Math.Round(second * 1_000_000);
+            decimal scale = isPwr2 ? Pow2(exponent) : Pow10(exponent);
+            long totalMicros = decimal.ToInt64(decimal.Round(((decimal)ts * 1_000_000m) / scale, MidpointRounding.AwayFromZero));
             Seconds = (uint)(totalMicros / 1_000_000);
             Microseconds = (uint)(totalMicros % 1_000_000);
         }
@@ -117,6 +110,32 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
         {
             return base.GetHashCode();
         }
+        
+        
+        private static decimal Pow10(int exponent)
+        {
+            decimal result = 1m;
+
+            for (int i = 0; i < exponent; i++)
+            {
+                result *= 10m;
+            }
+
+            return result;
+        }
+
+        private static decimal Pow2(int exponent)
+        {
+            decimal result = 1m;
+
+            for (int i = 0; i < exponent; i++)
+            {
+                result *= 2m;
+            }
+
+            return result;
+        }
+
         #endregion
     }
 }

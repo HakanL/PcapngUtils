@@ -173,7 +173,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
-                    if (tsresols.TryGetValue(interfaceID, out long value))
+                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
                     {
                         tsresol = value;
                     }

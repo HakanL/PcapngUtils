@@ -35,11 +35,10 @@ namespace Haukcode.PcapngUtils.PcapNG
         private Stream stream;
         private long basePosition = 0;
         private bool ReverseByteOrder = false;
-        int interfaceId = 0;
+        private int interfaceId = 0;
         private readonly Dictionary<int, long> tsresols = new Dictionary<int, long>();
-
+        private readonly Dictionary<int, long> initialTsresols = new Dictionary<int, long>();
         private List<HeaderWithInterfacesDescriptions> headersWithInterface = new List<HeaderWithInterfacesDescriptions>();
-
         public IList<HeaderWithInterfacesDescriptions> HeadersWithInterfaceDescriptions
         {
             get { return this.headersWithInterface.AsReadOnly(); }
@@ -131,13 +130,19 @@ namespace Haukcode.PcapngUtils.PcapNG
             if (!(from item in preHeadersWithInterface where (item.Value.Any()) select item).Any())
                 throw new ArgumentException(string.Format("[PcapNgReader.Initialize] Stream don't contains any InterfaceDescriptionBlock"));
 
-            this.headersWithInterface = (from item in preHeadersWithInterface
-                                         where (item.Value.Any())
-                                         select item)
-                                                .Select(x => new HeaderWithInterfacesDescriptions(x.Key, x.Value))
-                                                .ToList();
+            this.headersWithInterface = (from item in preHeadersWithInterface 
+                    where (item.Value.Any()) 
+                    select item)
+                .Select(x => new HeaderWithInterfacesDescriptions(x.Key, x.Value))
+                .ToList();
 
+            initialTsresols.Clear();
+            foreach (KeyValuePair<int, long> item in tsresols)
+            {
+                initialTsresols[item.Key] = item.Value;
+            }
             Rewind();
+            
         }
 
         /// <summary>
@@ -157,7 +162,11 @@ namespace Haukcode.PcapngUtils.PcapNG
             {
                 this.binaryReader.BaseStream.Position = this.basePosition;
                 tsresols.Clear();
-                interfaceId = 0;
+                foreach (KeyValuePair<int, long> item in initialTsresols)
+                {
+                    tsresols[item.Key] = item.Value;
+                }
+                interfaceId = initialTsresols.Count;
             }
         }
 
@@ -214,51 +223,51 @@ namespace Haukcode.PcapngUtils.PcapNG
                 {
                     prevPosition = this.binaryReader.BaseStream.Position;
                     block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException, tsresols);
-                }
 
-                if (block == null)
-                {
-                    throw new Exception($"[ReadPackets] AbstractBlockFactory cannot read packet on position {prevPosition}");
-                }
+                    if (block == null)
+                    {
+                        throw new Exception($"[ReadPackets] AbstractBlockFactory cannot read packet on position {prevPosition}");
+                    }
 
-                switch (block.BlockType)
-                {
-                    
-                    case BaseBlock.Types.SectionHeader:
-                        tsresols.Clear();
-                        interfaceId = 0;
-                        break;
+                    switch (block.BlockType)
+                    {
 
-                    case BaseBlock.Types.InterfaceDescription:
-                        if (block is InterfaceDescriptionBlock idb)
-                        {
-                            RegisterInterface(idb);
-                        }
-                        break;
-                    
-                    case BaseBlock.Types.EnhancedPacket:
-                        if (!(block is EnhancedPacketBlock enhancedBlock))
-                            throw new Exception($"[ReadPackets] system cannot cast block to EnhancedPacketBlock. Block start on position: {prevPosition}.");
-                        else
-                            return enhancedBlock;
+                        case BaseBlock.Types.SectionHeader:
+                            tsresols.Clear();
+                            interfaceId = 0;
+                            break;
 
-                    case BaseBlock.Types.Packet:
-                        if (!(block is PacketBlock packetBlock))
-                            throw new Exception($"[ReadPackets] system cannot cast block to PacketBlock. Block start on position: {prevPosition}.");
-                        else
-                            return packetBlock;
+                        case BaseBlock.Types.InterfaceDescription:
+                            if (block is InterfaceDescriptionBlock idb)
+                            {
+                                RegisterInterface(idb);
+                            }
 
-                    case BaseBlock.Types.SimplePacket:
-                        if (!(block is SimplePacketBlock simpleBlock))
-                            throw new Exception($"[ReadPackets] system cannot cast block to SimplePacketBlock. Block start on position: {prevPosition}.");
-                        else
-                            return simpleBlock;
+                            break;
 
-                    default:
-                        break;
+                        case BaseBlock.Types.EnhancedPacket:
+                            if (!(block is EnhancedPacketBlock enhancedBlock))
+                                throw new Exception($"[ReadPackets] system cannot cast block to EnhancedPacketBlock. Block start on position: {prevPosition}.");
+                            else
+                                return enhancedBlock;
+
+                        case BaseBlock.Types.Packet:
+                            if (!(block is PacketBlock packetBlock))
+                                throw new Exception($"[ReadPackets] system cannot cast block to PacketBlock. Block start on position: {prevPosition}.");
+                            else
+                                return packetBlock;
+
+                        case BaseBlock.Types.SimplePacket:
+                            if (!(block is SimplePacketBlock simpleBlock))
+                                throw new Exception($"[ReadPackets] system cannot cast block to SimplePacketBlock. Block start on position: {prevPosition}.");
+                            else
+                                return simpleBlock;
+
+                        default:
+                            break;
+                    }
                 }
             }
-
             return null;
         }
         

@@ -37,7 +37,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                         block = InterfaceDescriptionBlock.Parse(baseblock, ActionOnException);                        
                         break;
                     case BaseBlock.Types.Packet:
-                        block = PacketBlock.Parse(baseblock, ActionOnException);
+                        block = PacketBlock.Parse(baseblock, ActionOnException, tsresols);
                         break;
                     case BaseBlock.Types.SimplePacket:                             
                         block = SimplePacketBlock.Parse(baseblock, ActionOnException);   
@@ -58,7 +58,10 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             }
             catch(Exception exc)
             {
-                ActionOnException(exc);
+                if (ActionOnException != null)
+                {
+                    ActionOnException(exc);
+                }
                 return null;
             }
         }
