@@ -13,13 +13,20 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
     public static class AbstractBlockFactory
     {
         #region method
+        [Obsolete("This method uses a default of 6 for tsresol, which is not correct in all cases.")]
         public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException)
         {
+            return ReadNextBlock(binaryReader, bytesReorder, ActionOnException, new Dictionary<int, long>());
+        }
+
+        public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
+        {
             CustomContract.Requires<ArgumentNullException>(binaryReader != null, "binaryReader cannot be null");
+            CustomContract.Requires<ArgumentNullException>(tsresols != null, "tsresols cannot be null");
             try
             {
                 BaseBlock baseblock = new BaseBlock(binaryReader, bytesReorder);
-                AbstractBlock block = null; ;
+                AbstractBlock block = null;
                 switch (baseblock.BlockType)
                 {
                     case BaseBlock.Types.SectionHeader:
@@ -41,7 +48,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                         block = InterfaceStatisticsBlock.Parse(baseblock, ActionOnException);
                         break;
                     case BaseBlock.Types.EnhancedPacket:
-                        block = EnhancedPacketBlock.Parse(baseblock, ActionOnException);
+                        block = EnhancedPacketBlock.Parse(baseblock, ActionOnException, tsresols);
                         break;
                     default:                             
                         break;
@@ -53,7 +60,6 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 ActionOnException(exc);
                 return null;
             }
-
         }
         #endregion
     }

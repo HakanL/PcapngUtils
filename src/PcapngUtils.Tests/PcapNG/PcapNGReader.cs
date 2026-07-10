@@ -8,12 +8,94 @@ using System.Linq;
 using Haukcode.PcapngUtils.Common;
 using NUnit.Framework;
 using System.Runtime.ExceptionServices;
+using Haukcode.PcapngUtils.PcapNG.OptionTypes;
 
 namespace Haukcode.PcapngUtils.PcapNG
 {
     [TestFixture]
     public static class PcapNGReader_Test
     {
+        /// <summary>
+        /// Builds a minimal pcapng stream containing one SHB, one IDB (with the given tsresol),
+        /// and one EPB whose raw 64-bit timestamp is supplied as tsHigh:tsLow in the IDB's own
+        /// resolution units (not in microseconds).
+        /// </summary>
+        private static MemoryStream BuildStreamWithTsresol(byte tsresol, uint tsHigh, uint tsLow)
+        {
+            var ms = new MemoryStream();
+            Action<Exception> rethrow = ex => ExceptionDispatchInfo.Capture(ex).Throw();
+
+            // Section Header Block
+            var shb = SectionHeaderBlock.GetEmptyHeader(false);
+            byte[] shbBytes = shb.ConvertToByte(false, rethrow);
+            ms.Write(shbBytes, 0, shbBytes.Length);
+
+            // Interface Description Block with custom if_tsresol
+            var idbOptions = new InterfaceDescriptionOption(TimestampResolution: tsresol);
+            var idb = new InterfaceDescriptionBlock(LinkTypes.Ethernet, 65535, idbOptions);
+            byte[] idbBytes = idb.ConvertToByte(false, rethrow);
+            ms.Write(idbBytes, 0, idbBytes.Length);
+
+            // Enhanced Packet Block – timestamp encoded in the IDB's resolution units.
+            // Build the EPB body manually so the raw timestamp bytes are not re-scaled.
+            byte[] payload = { 1, 2, 3, 4 };
+            var body = new List<byte>();
+            body.AddRange(BitConverter.GetBytes((int)0));         // InterfaceID = 0
+            body.AddRange(BitConverter.GetBytes(tsHigh));         // Timestamp High
+            body.AddRange(BitConverter.GetBytes(tsLow));          // Timestamp Low
+            body.AddRange(BitConverter.GetBytes(payload.Length)); // Captured Length
+            body.AddRange(BitConverter.GetBytes(payload.Length)); // Original Length
+            body.AddRange(payload);                                // Packet data
+            body.AddRange(new byte[] { 0, 0, 0, 0 });            // Options End
+
+            uint totalLength = (uint)(12 + body.Count);  // type(4) + totLen(4) + body + totLen(4)
+            byte[] epbType = BitConverter.GetBytes((uint)BaseBlock.Types.EnhancedPacket);
+            byte[] epbTotLen = BitConverter.GetBytes(totalLength);
+            ms.Write(epbType, 0, 4);
+            ms.Write(epbTotLen, 0, 4);
+            ms.Write(body.ToArray(), 0, body.Count);
+            ms.Write(epbTotLen, 0, 4);
+
+            ms.Position = 0;
+            return ms;
+        }
+
+        [Test]
+        public static void PcapNgReader_IfTsresol_AffectsEnhancedPacketTimestamp_Test()
+        {
+            // if_tsresol = 9 → nanosecond resolution (base-10, 10^-9)
+            // ts = 1,500,000,000 ns = 1 second + 500,000 microseconds
+            using (var ms = BuildStreamWithTsresol(tsresol: 9, tsHigh: 0, tsLow: 1_500_000_000u))
+            using (var reader = new PcapNGReader(ms, false))
+            {
+                var packet = reader.ReadNextPacket();
+                Assert.IsNotNull(packet);
+                Assert.AreEqual((uint)1, packet.Seconds, "Seconds should be 1 for a 1.5 s nanosecond-resolution timestamp");
+                Assert.AreEqual((uint)500_000, packet.Microseconds, "Microseconds should be 500000 for a 1.5 s nanosecond-resolution timestamp");
+            }
+        }
+
+        [Test]
+        public static void PcapNgReader_IfTsresol_AffectsTimestampAfterRewind_Test()
+        {
+            // Verify that Rewind() preserves the tsresol mapping so packets are still
+            // decoded at the correct resolution after rewinding to the start of the stream.
+            using (var ms = BuildStreamWithTsresol(tsresol: 9, tsHigh: 0, tsLow: 1_500_000_000u))
+            using (var reader = new PcapNGReader(ms, false))
+            {
+                // First read – consume the packet
+                var firstPacket = reader.ReadNextPacket();
+                Assert.IsNotNull(firstPacket);
+
+                // Rewind and read again
+                reader.Rewind();
+                var secondPacket = reader.ReadNextPacket();
+                Assert.IsNotNull(secondPacket);
+                Assert.AreEqual((uint)1, secondPacket.Seconds, "Seconds should still be 1 after Rewind()");
+                Assert.AreEqual((uint)500_000, secondPacket.Microseconds, "Microseconds should still be 500000 after Rewind()");
+            }
+        }
+
         [TestCase(50)]
         [TestCase(500)]
         public static void PcapNgReader_IncompletedFileStream_Test(int maxLength)

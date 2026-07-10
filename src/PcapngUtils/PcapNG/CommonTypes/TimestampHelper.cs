@@ -52,6 +52,26 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             Microseconds = (uint)(timestamp % 1000000);
         }
 
+        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder, long tsresol)
+        {
+            CustomContract.Requires<ArgumentNullException>(timestampAsByte != null, "timestampAsByte cannot be null");
+            CustomContract.Requires<ArgumentException>(timestampAsByte.Length == 8, "timestamp must have length = 8");
+
+            TimestampHigh = (BitConverter.ToUInt32(timestampAsByte.Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
+            TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
+
+            ulong ts = ((ulong)TimestampHigh << 32) | TimestampLow;
+            CustomContract.Requires<ArgumentOutOfRangeException>(tsresol >= byte.MinValue && tsresol <= byte.MaxValue, "tsresol must be in range 0..255");
+            byte tsresolByte = (byte)tsresol;
+            bool isPwr2 = (tsresolByte & 0b10000000) > 0;
+            int exponent = tsresolByte & 0b01111111;
+            // Note: tsresol usually is 6 or 9 to represent microseconds or nanoseconds
+            double second = isPwr2 ? ts * Math.Pow(2, -exponent) : ts * Math.Pow(10, -exponent);
+            long totalMicros = (long)Math.Round(second * 1_000_000);
+            Seconds = (uint)(totalMicros / 1_000_000);
+            Microseconds = (uint)(totalMicros % 1_000_000);
+        }
+
         public TimestampHelper(uint seconds, uint microseconds)
         {
             Seconds = seconds;

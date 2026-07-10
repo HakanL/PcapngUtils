@@ -35,6 +35,8 @@ namespace Haukcode.PcapngUtils.PcapNG
         private Stream stream;
         private long basePosition = 0;
         private bool ReverseByteOrder = false;
+        private int interfaceId = 0;
+        private readonly Dictionary<int, long> tsresols = new Dictionary<int, long>();
 
         private List<HeaderWithInterfacesDescriptions> headersWithInterface = new List<HeaderWithInterfacesDescriptions>();
 
@@ -84,23 +86,25 @@ namespace Haukcode.PcapngUtils.PcapNG
             var preHeadersWithInterface = new List<KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>>();
             while (this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length && this.basePosition == 0)
             {
-                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException);
+                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException, tsresols);
                 if (block == null)
                     break;
 
                 switch (block.BlockType)
                 {
                     case BaseBlock.Types.SectionHeader:
-                        if (block is SectionHeaderBlock)
+                        tsresols.Clear();
+                        interfaceId = 0;
+                        if (block is SectionHeaderBlock headerBlock)
                         {
-                            SectionHeaderBlock headerBlock = block as SectionHeaderBlock;
                             preHeadersWithInterface.Add(new KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>(headerBlock, new List<InterfaceDescriptionBlock>()));
                         }
                         break;
 
                     case BaseBlock.Types.InterfaceDescription:
-                        if (block is InterfaceDescriptionBlock)
+                        if (block is InterfaceDescriptionBlock idb)
                         {
+                            RegisterInterface(idb);
                             InterfaceDescriptionBlock interfaceBlock = block as InterfaceDescriptionBlock;
                             if (preHeadersWithInterface.Any())
                             {
@@ -152,6 +156,17 @@ namespace Haukcode.PcapngUtils.PcapNG
             lock (this.syncRoot)
             {
                 this.binaryReader.BaseStream.Position = this.basePosition;
+                tsresols.Clear();
+                interfaceId = 0;
+                // Re-populate tsresol mappings from the IDBs that were parsed during Initialize()
+                // so that EnhancedPacket timestamps use the correct resolution after rewinding.
+                foreach (var header in this.headersWithInterface)
+                {
+                    foreach (var idb in header.InterfaceDescriptions)
+                    {
+                        RegisterInterface(idb);
+                    }
+                }
             }
         }
 
@@ -207,7 +222,7 @@ namespace Haukcode.PcapngUtils.PcapNG
                 lock (this.syncRoot)
                 {
                     prevPosition = this.binaryReader.BaseStream.Position;
-                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException);
+                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException, tsresols);
                 }
 
                 if (block == null)
@@ -217,6 +232,18 @@ namespace Haukcode.PcapngUtils.PcapNG
 
                 switch (block.BlockType)
                 {
+                    case BaseBlock.Types.SectionHeader:
+                        tsresols.Clear();
+                        interfaceId = 0;
+                        break;
+
+                    case BaseBlock.Types.InterfaceDescription:
+                        if (block is InterfaceDescriptionBlock idb)
+                        {
+                            RegisterInterface(idb);
+                        }
+                        break;
+
                     case BaseBlock.Types.EnhancedPacket:
                         if (!(block is EnhancedPacketBlock enhancedBlock))
                             throw new Exception($"[ReadPackets] system cannot cast block to EnhancedPacketBlock. Block start on position: {prevPosition}.");
@@ -241,6 +268,13 @@ namespace Haukcode.PcapngUtils.PcapNG
             }
 
             return null;
+        }
+
+        private void RegisterInterface(InterfaceDescriptionBlock idb)
+        {
+            long tsresol = (long)(idb.Options.TimestampResolution ?? 6);
+            tsresols[interfaceId] = tsresol;
+            interfaceId++;
         }
     }
 }
