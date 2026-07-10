@@ -15,6 +15,10 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
 {
     public sealed class EnhancedPacketBlock : AbstractBlock, IPacket
     {
+        /// <summary>
+        /// Default timestamp resolution: base-10 exponent 6, i.e. microseconds (10^-6 s).
+        /// </summary>
+        private const long DefaultTimestampResolution = 6;
         #region IPacket
         public uint Seconds
         {
@@ -128,35 +132,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         #region ctor
         public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException)
         {
-            CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
-            CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
-            CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.EnhancedPacket, "Invalid packet type");
-
-            long positionInStream = baseBlock.PositionInStream;
-            using (Stream stream = new MemoryStream(baseBlock.Body))
-            {
-                using (BinaryReader binaryReader = new BinaryReader(stream))
-                {
-                    int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
-                    byte[] timestamp = binaryReader.ReadBytes(8);
-                    var timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder);
-                    int capturedLength = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
-                    int packetLength = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
-                    byte[] data = binaryReader.ReadBytes(capturedLength);
-                    if (data.Length < capturedLength)
-                        throw new EndOfStreamException("Unable to read beyond the end of the stream");
-                    int remainderLength = (int)capturedLength % BaseBlock.AlignmentBoundary;
-                    if (remainderLength > 0)
-                    {
-                        int paddingLength = BaseBlock.AlignmentBoundary - remainderLength;
-                        binaryReader.ReadBytes(paddingLength);
-                    }
-                    var option = EnhancedPacketOption.Parse(binaryReader, baseBlock.ReverseByteOrder, ActionOnException);
-                    var enhancedBlock = new EnhancedPacketBlock(interfaceID, timestampHelper, packetLength, data, option, positionInStream);
-
-                    return enhancedBlock;
-                }
-            }
+            return Parse(baseBlock, ActionOnException, new Dictionary<int, long>());
         }
 
         public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
@@ -166,7 +142,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             CustomContract.Requires<ArgumentNullException>(tsresols != null, "tsresols cannot be null");
             CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.EnhancedPacket, "Invalid packet type");
 
-            long tsresol = 6;
+            long tsresol = DefaultTimestampResolution;
             long positionInStream = baseBlock.PositionInStream;
             using (Stream stream = new MemoryStream(baseBlock.Body))
             {
