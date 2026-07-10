@@ -13,7 +13,7 @@ using Haukcode.PcapngUtils.PcapNG.CommonTypes;
 namespace Haukcode.PcapngUtils.PcapNG
 {
     [TestFixture]
-    public static class TimestampHelpler_Test
+    public static class TimestampHelper_Test
     {
         [Test]
         public static void TimestampHelper_Base10_MicrosecondResolution_Test()

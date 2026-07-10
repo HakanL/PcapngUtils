@@ -23,6 +23,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(binaryReader != null, "binaryReader cannot be null");
+            CustomContract.Requires<ArgumentNullException>(tsresols != null, "tsresols cannot be null");
             try
             {
                 BaseBlock baseblock = new BaseBlock(binaryReader, bytesReorder);

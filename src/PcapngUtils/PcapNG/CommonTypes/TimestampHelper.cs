@@ -61,7 +61,8 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
 
             ulong ts = ((ulong)TimestampHigh << 32) | TimestampLow;
-            byte tsresolByte = unchecked((byte)tsresol);
+            CustomContract.Requires<ArgumentOutOfRangeException>(tsresol >= byte.MinValue && tsresol <= byte.MaxValue, "tsresol must be in range 0..255");
+            byte tsresolByte = (byte)tsresol;
             bool isPwr2 = (tsresolByte & 0b10000000) > 0;
             int exponent  = tsresolByte & 0b01111111;
             // Note: tsresol usually is 6 or 9 to represent microseconds or nanoseconds

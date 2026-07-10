@@ -163,6 +163,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
+            CustomContract.Requires<ArgumentNullException>(tsresols != null, "tsresols cannot be null");
             CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.EnhancedPacket, "Invalid packet type");
             
             long tsresol = 6;
