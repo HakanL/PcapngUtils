@@ -105,10 +105,9 @@ namespace Haukcode.PcapngUtils.PcapNG
                         if (block is InterfaceDescriptionBlock idb)
                         {
                             RegisterInterface(idb);
-                            InterfaceDescriptionBlock interfaceBlock = block as InterfaceDescriptionBlock;
                             if (preHeadersWithInterface.Any())
                             {
-                                preHeadersWithInterface.Last().Value.Add(interfaceBlock);
+                                preHeadersWithInterface.Last().Value.Add(idb);
                             }
                             else
                             {

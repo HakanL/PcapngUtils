@@ -18,7 +18,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         /// <summary>
         /// Default timestamp resolution: base-10 exponent 6, i.e. microseconds (10^-6 s).
         /// </summary>
-        private const long DefaultTimestampResolution = 6;
+        private const byte DefaultTimestampResolution = 6;
         #region IPacket
         public uint Seconds
         {
@@ -130,6 +130,11 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         #endregion
 
         #region ctor
+        /// <remarks>
+        /// Uses the default microsecond timestamp resolution (if_tsresol = 6). Use the
+        /// <see cref="Parse(BaseBlock, Action{Exception}, Dictionary{int,long})"/> overload
+        /// when an Interface Description Block specifies a different resolution.
+        /// </remarks>
         public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException)
         {
             return Parse(baseBlock, ActionOnException, new Dictionary<int, long>());
@@ -142,7 +147,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             CustomContract.Requires<ArgumentNullException>(tsresols != null, "tsresols cannot be null");
             CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.EnhancedPacket, "Invalid packet type");
 
-            long tsresol = DefaultTimestampResolution;
+            byte tsresol = DefaultTimestampResolution;
             long positionInStream = baseBlock.PositionInStream;
             using (Stream stream = new MemoryStream(baseBlock.Body))
             {
@@ -151,7 +156,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     if (tsresols.TryGetValue(interfaceID, out long value))
                     {
-                        tsresol = value;
+                        tsresol = (byte)value;
                     }
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     var timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder, tsresol);
