@@ -36,6 +36,7 @@ namespace Haukcode.PcapngUtils.PcapNG
         private long basePosition = 0;
         private bool ReverseByteOrder = false;
         private int interfaceId = 0;
+        private int initialInterfaceId = 0;
         private readonly Dictionary<int, long> tsresols = new Dictionary<int, long>();
         private readonly Dictionary<int, long> initialTsresols = new Dictionary<int, long>();
 
@@ -142,6 +143,7 @@ namespace Haukcode.PcapngUtils.PcapNG
             {
                 initialTsresols[item.Key] = item.Value;
             }
+            initialInterfaceId = interfaceId;
 
             Rewind();
         }
@@ -167,7 +169,7 @@ namespace Haukcode.PcapngUtils.PcapNG
                 {
                     tsresols[item.Key] = item.Value;
                 }
-                interfaceId = initialTsresols.Count;
+                interfaceId = initialInterfaceId;
             }
         }
 

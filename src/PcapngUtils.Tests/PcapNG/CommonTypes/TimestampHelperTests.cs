@@ -1,6 +1,5 @@
 using System;
 using NUnit.Framework;
-using Haukcode.PcapngUtils.PcapNG.CommonTypes;
 
 namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
 {

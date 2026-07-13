@@ -77,7 +77,7 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             decimal scale = isPwr2 ? Pow2(exponent) : Pow10(exponent);
             decimal totalMicrosDecimal = decimal.Round(((decimal)ts * 1_000_000m) / scale, MidpointRounding.AwayFromZero);
 
-            CustomContract.Requires<OverflowException>(totalMicrosDecimal >= 0 && totalMicrosDecimal <= (decimal)long.MaxValue, "Timestamp value is too large to represent in microseconds");
+            CustomContract.Requires<OverflowException>(totalMicrosDecimal >= 0 && totalMicrosDecimal <= (decimal)long.MaxValue, "Timestamp value is out of range for microsecond representation");
 
             long totalMicros = (long)totalMicrosDecimal;
             Seconds = (uint)(totalMicros / 1_000_000);
