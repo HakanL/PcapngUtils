@@ -84,11 +84,11 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             return Parse(baseBlock, ActionOnException, null);
         }
 
-        public static InterfaceStatisticsBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
+        public static InterfaceStatisticsBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, IReadOnlyDictionary<int, byte> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
-            CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.InterfaceStatistics, "Invalid packet type");    
+            CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.InterfaceStatistics, "Invalid packet type");
 
             long positionInStream = baseBlock.PositionInStream;
             using (Stream stream = new MemoryStream(baseBlock.Body))
@@ -97,13 +97,13 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 {
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     byte tsresol = 6;
-                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
-                        tsresol = (byte)value;
+                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out byte value))
+                        tsresol = value;
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)
                         throw new EndOfStreamException("Unable to read beyond the end of the stream");
                     TimestampHelper timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder, tsresol);
-                    InterfaceStatisticsOption options = InterfaceStatisticsOption.Parse(binaryReader, baseBlock.ReverseByteOrder, ActionOnException);
+                    InterfaceStatisticsOption options = InterfaceStatisticsOption.Parse(binaryReader, baseBlock.ReverseByteOrder, ActionOnException, tsresol);
                     InterfaceStatisticsBlock statisticBlock = new InterfaceStatisticsBlock(interfaceID, timestampHelper, options, positionInStream);
                     return statisticBlock;
                 }

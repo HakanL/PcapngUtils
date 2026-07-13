@@ -76,5 +76,53 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             Assert.AreEqual(helperExplicit.Seconds, helperDefault.Seconds);
             Assert.AreEqual(helperExplicit.Microseconds, helperDefault.Microseconds);
         }
+
+        [Test]
+        public static void TimestampHelper_Base10_SecondResolution_Test()
+        {
+            // tsresol = 0 => 10^0 = whole seconds per unit
+            var helper = new TimestampHelper(MakeTimestampBytes(2), false, 0);
+            Assert.AreEqual((uint)2, helper.Seconds);
+            Assert.AreEqual((uint)0, helper.Microseconds);
+        }
+
+        [Test]
+        public static void TimestampHelper_ConvertToByte_PreservesRawTimestamp_Test()
+        {
+            // The raw timestamp words must round-trip unchanged regardless of resolution,
+            // so that re-serializing a block into a section with the same if_tsresol is lossless.
+            byte[] bytes = MakeTimestampBytes(1_500_000_000);
+            var helper = new TimestampHelper(bytes, false, 9);
+            CollectionAssert.AreEqual(bytes, helper.ConvertToByte(false));
+        }
+
+        [Test]
+        public static void TimestampHelper_InvalidBase10Exponent_Throws_Test()
+        {
+            // 10^29 is not representable as decimal
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TimestampHelper(MakeTimestampBytes(1), false, 29));
+        }
+
+        [Test]
+        public static void TimestampHelper_InvalidBase2Exponent_Throws_Test()
+        {
+            // 0xE0 = base-2 exponent 96; 2^96 is not representable as decimal
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TimestampHelper(MakeTimestampBytes(1), false, 0xE0));
+        }
+
+        [Test]
+        public static void TimestampHelper_SecondsOverflow_Throws_Test()
+        {
+            // 5,000,000,000 seconds exceeds uint.MaxValue
+            Assert.Throws<OverflowException>(() => new TimestampHelper(MakeTimestampBytes(5_000_000_000), false, 0));
+        }
+
+        [Test]
+        public static void TimestampHelper_MicrosecondSecondsOverflow_Throws_Test()
+        {
+            // (uint.MaxValue + 1) seconds expressed in microseconds
+            ulong ts = ((ulong)uint.MaxValue + 1) * 1_000_000;
+            Assert.Throws<OverflowException>(() => new TimestampHelper(MakeTimestampBytes(ts), false, 6));
+        }
     }
 }

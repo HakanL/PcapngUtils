@@ -142,7 +142,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             return Parse(baseBlock, ActionOnException, null);
         }
 
-        public static PacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
+        public static PacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, IReadOnlyDictionary<int, byte> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
@@ -156,8 +156,8 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     short interfaceID = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     int interfaceKey = unchecked((ushort)interfaceID);
                     byte tsresol = 6;
-                    if (tsresols != null && tsresols.TryGetValue(interfaceKey, out long value))
-                        tsresol = (byte)value;
+                    if (tsresols != null && tsresols.TryGetValue(interfaceKey, out byte value))
+                        tsresol = value;
                     short dropCount = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)

@@ -132,7 +132,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             return Parse(baseBlock, ActionOnException, null);
         }
 
-        public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
+        public static EnhancedPacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, IReadOnlyDictionary<int, byte> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
@@ -145,8 +145,8 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 {
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     byte tsresol = 6;
-                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
-                        tsresol = (byte)value;
+                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out byte value))
+                        tsresol = value;
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)
                         throw new EndOfStreamException("Unable to read beyond the end of the stream");

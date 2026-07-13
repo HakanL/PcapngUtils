@@ -36,7 +36,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    postOption = InterfaceStatisticsOption.Parse(binaryReader, reorder, null);
+                    postOption = InterfaceStatisticsOption.Parse(binaryReader, reorder, null, 6);
                 }
             }
 

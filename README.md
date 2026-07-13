@@ -280,6 +280,11 @@ reader.ReadPackets(CancellationToken.None);
 | `Microseconds` | Timestamp microseconds component. |
 | `Data` | Raw packet bytes. |
 
+For pcapng files, `Seconds`/`Microseconds` are computed using the `if_tsresol` timestamp
+resolution declared by the packet's Interface Description Block (both base-10 and base-2
+resolutions are supported), falling back to the pcapng default of microseconds when the
+option is absent. Sub-microsecond values are rounded half-up to the nearest microsecond.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

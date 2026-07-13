@@ -14,7 +14,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
     {
         #region method
 
-        private static readonly Dictionary<int, long> EmptyTsresols = new Dictionary<int, long>();
+        private static readonly Dictionary<int, byte> EmptyTsresols = new Dictionary<int, byte>();
 
         [Obsolete("Use the overload that accepts a tsresols dictionary so that per-interface timestamp resolution is applied correctly.")]
         public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException)
@@ -22,7 +22,13 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             return ReadNextBlock(binaryReader, bytesReorder, ActionOnException, EmptyTsresols);
         }
 
-        public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
+        /// <summary>
+        /// Reads the next block from the stream. <paramref name="tsresols"/> maps section-scoped
+        /// interface IDs to the raw if_tsresol value of their Interface Description Block; it is used
+        /// to interpret packet timestamps. Interfaces without an entry fall back to the pcapng
+        /// default resolution of 10^-6 (microseconds).
+        /// </summary>
+        public static AbstractBlock ReadNextBlock(BinaryReader binaryReader, bool bytesReorder, Action<Exception> ActionOnException, IReadOnlyDictionary<int, byte> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(binaryReader != null, "binaryReader cannot be null");
             CustomContract.Requires<ArgumentNullException>(tsresols != null, "tsresols cannot be null");

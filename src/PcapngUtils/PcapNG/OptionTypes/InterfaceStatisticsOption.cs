@@ -129,7 +129,18 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
         #endregion
 
         #region method
+        [Obsolete("Use the overload that accepts tsresol so that isb_starttime/isb_endtime are scaled with the interface's timestamp resolution.")]
         public static InterfaceStatisticsOption Parse(BinaryReader binaryReader, bool reverseByteOrder, Action<Exception> ActionOnException)
+        {
+            return Parse(binaryReader, reverseByteOrder, ActionOnException, 6);
+        }
+
+        /// <summary>
+        /// Parses the options of an Interface Statistics Block. <paramref name="tsresol"/> is the raw
+        /// if_tsresol value of the interface the block refers to; it determines how the
+        /// isb_starttime/isb_endtime option timestamps are interpreted.
+        /// </summary>
+        public static InterfaceStatisticsOption Parse(BinaryReader binaryReader, bool reverseByteOrder, Action<Exception> ActionOnException, byte tsresol)
         {
             CustomContract.Requires<ArgumentNullException>(binaryReader != null, "binaryReader cannot be null");
 
@@ -149,13 +160,13 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
                                 break;
                             case (ushort)InterfaceStatisticsOptionCode.StartTimeCode:
                                 if (item.Value.Length == 8)
-                                    option.StartTime = new TimestampHelper(item.Value, reverseByteOrder);
+                                    option.StartTime = new TimestampHelper(item.Value, reverseByteOrder, tsresol);
                                 else
                                     throw new ArgumentException(string.Format("[InterfaceStatisticsOption.Parse] StartTimeCode contains invalid length. Received: {0} bytes, expected: {1}", item.Value.Length, 8));
                                 break;
                             case (ushort)InterfaceStatisticsOptionCode.EndTimeCode:
                                 if (item.Value.Length == 8)
-                                    option.EndTime = new TimestampHelper(item.Value, reverseByteOrder);
+                                    option.EndTime = new TimestampHelper(item.Value, reverseByteOrder, tsresol);
                                 else
                                     throw new ArgumentException(string.Format("[InterfaceStatisticsOption.Parse] EndTimeCode contains invalid length. Received: {0} bytes, expected: {1}", item.Value.Length, 8));
                                 break;

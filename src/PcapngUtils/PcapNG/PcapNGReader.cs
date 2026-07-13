@@ -37,8 +37,8 @@ namespace Haukcode.PcapngUtils.PcapNG
         private bool ReverseByteOrder = false;
         private int interfaceId = 0;
         private int initialInterfaceId = 0;
-        private readonly Dictionary<int, long> tsresols = new Dictionary<int, long>();
-        private readonly Dictionary<int, long> initialTsresols = new Dictionary<int, long>();
+        private readonly Dictionary<int, byte> tsresols = new Dictionary<int, byte>();
+        private readonly Dictionary<int, byte> initialTsresols = new Dictionary<int, byte>();
 
         private List<HeaderWithInterfacesDescriptions> headersWithInterface = new List<HeaderWithInterfacesDescriptions>();
 
@@ -139,7 +139,7 @@ namespace Haukcode.PcapngUtils.PcapNG
                                                 .ToList();
 
             initialTsresols.Clear();
-            foreach (KeyValuePair<int, long> item in tsresols)
+            foreach (KeyValuePair<int, byte> item in tsresols)
             {
                 initialTsresols[item.Key] = item.Value;
             }
@@ -165,7 +165,7 @@ namespace Haukcode.PcapngUtils.PcapNG
             {
                 this.binaryReader.BaseStream.Position = this.basePosition;
                 tsresols.Clear();
-                foreach (KeyValuePair<int, long> item in initialTsresols)
+                foreach (KeyValuePair<int, byte> item in initialTsresols)
                 {
                     tsresols[item.Key] = item.Value;
                 }
@@ -277,8 +277,7 @@ namespace Haukcode.PcapngUtils.PcapNG
 
         private void RegisterInterface(InterfaceDescriptionBlock idb)
         {
-            byte tsresol = idb.Options.TimestampResolution ?? 6;
-            tsresols[interfaceId] = (long)tsresol;
+            tsresols[interfaceId] = idb.Options.TimestampResolution ?? 6;
             interfaceId++;
         }
     }

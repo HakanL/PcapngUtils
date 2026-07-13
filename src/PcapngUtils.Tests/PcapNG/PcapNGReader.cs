@@ -85,6 +85,46 @@ namespace Haukcode.PcapngUtils.PcapNG
             }
         }
 
+        [Test]
+        public static void PcapNGReader_WriteRoundTrip_PreservesNanosecondTimestamps_Test()
+        {
+            byte[] pcapNgBytes = CreatePcapNgWithNanosecondTimestampResolution();
+            byte[] rewrittenBytes;
+
+            // Copy the capture: read the packet and write it to a new stream reusing the
+            // original headers (which carry the nanosecond if_tsresol option).
+            using (MemoryStream input = new MemoryStream(pcapNgBytes))
+            {
+                using (PcapNGReader reader = new PcapNGReader(input, false))
+                {
+                    List<HeaderWithInterfacesDescriptions> headers = reader.HeadersWithInterfaceDescriptions.ToList();
+                    IPacket packet = reader.ReadNextPacket();
+                    Assert.IsNotNull(packet);
+
+                    using (MemoryStream output = new MemoryStream())
+                    {
+                        using (PcapNGWriter writer = new PcapNGWriter(output, headers))
+                        {
+                            writer.WritePacket(packet);
+                        }
+                        rewrittenBytes = output.ToArray();
+                    }
+                }
+            }
+
+            using (MemoryStream stream = new MemoryStream(rewrittenBytes))
+            {
+                using (PcapNGReader reader = new PcapNGReader(stream, false))
+                {
+                    IPacket packet = reader.ReadNextPacket();
+
+                    Assert.IsNotNull(packet);
+                    Assert.AreEqual((uint)1, packet.Seconds);
+                    Assert.AreEqual((uint)500_000, packet.Microseconds);
+                }
+            }
+        }
+
         private static byte[] CreatePcapNgWithNanosecondTimestampResolution()
         {
             List<byte> bytes = new List<byte>();
