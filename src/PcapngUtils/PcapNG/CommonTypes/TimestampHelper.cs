@@ -39,17 +39,49 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
         #endregion
 
         #region ctor
-        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder)
+        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder) : this(timestampAsByte, reverseByteOrder, 6)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a TimestampHelper using the pcapng if_tsresol encoding.
+        /// </summary>
+        /// <param name="timestampAsByte">8-byte raw timestamp from the block.</param>
+        /// <param name="reverseByteOrder">Whether to reverse byte order when reading the timestamp words.</param>
+        /// <param name="tsresol">The raw if_tsresol byte value from the Interface Description Block (0..255).
+        /// Bit 7 selects the base: 0 = base-10 (10^-n), 1 = base-2 (2^-n). Bits 0..6 are the exponent n.
+        /// The default pcapng resolution is 6 (microseconds, i.e. 10^-6).</param>
+        public TimestampHelper(byte[] timestampAsByte, bool reverseByteOrder, long tsresol)
         {
             CustomContract.Requires<ArgumentNullException>(timestampAsByte != null, "timestampAsByte cannot be null");
             CustomContract.Requires<ArgumentException>(timestampAsByte.Length == 8, "timestamp must have length = 8");
+            CustomContract.Requires<ArgumentOutOfRangeException>(tsresol >= byte.MinValue && tsresol <= byte.MaxValue, "tsresol must be in range 0..255");
 
             TimestampHigh = (BitConverter.ToUInt32(timestampAsByte.Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
             TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
 
-            long timestamp = (TimestampHigh * 4294967296) + TimestampLow;
-            Seconds = (uint)(timestamp / 1000000);
-            Microseconds = (uint)(timestamp % 1000000);
+            ulong ts = ((ulong)TimestampHigh << 32) | TimestampLow;
+            byte tsresolByte = (byte)tsresol;
+            bool isPwr2 = (tsresolByte & 0b10000000) != 0;
+            int exponent = tsresolByte & 0b01111111;
+
+            if (isPwr2)
+            {
+                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 95, "base-2 tsresol exponent is too large to convert timestamp safely");
+            }
+            else
+            {
+                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 28, "base-10 tsresol exponent is too large to convert timestamp safely");
+            }
+
+            decimal scale = isPwr2 ? Pow2(exponent) : Pow10(exponent);
+            decimal totalMicrosDecimal = decimal.Round(((decimal)ts * 1_000_000m) / scale, MidpointRounding.AwayFromZero);
+
+            CustomContract.Requires<OverflowException>(totalMicrosDecimal >= 0 && totalMicrosDecimal <= (decimal)long.MaxValue, "Timestamp value is too large to represent in microseconds");
+
+            long totalMicros = (long)totalMicrosDecimal;
+            Seconds = (uint)(totalMicros / 1_000_000);
+            Microseconds = (uint)(totalMicros % 1_000_000);
         }
 
         public TimestampHelper(uint seconds, uint microseconds)
@@ -96,6 +128,22 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
         public override int GetHashCode()
         {
             return base.GetHashCode();
+        }
+
+        private static decimal Pow10(int exponent)
+        {
+            decimal result = 1m;
+            for (int i = 0; i < exponent; i++)
+                result *= 10m;
+            return result;
+        }
+
+        private static decimal Pow2(int exponent)
+        {
+            decimal result = 1m;
+            for (int i = 0; i < exponent; i++)
+                result *= 2m;
+            return result;
         }
         #endregion
     }

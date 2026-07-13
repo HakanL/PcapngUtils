@@ -136,7 +136,13 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         #endregion
 
         #region ctor
+        [Obsolete("Use the overload that accepts a tsresols dictionary so that per-interface timestamp resolution is applied correctly.")]
         public static PacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException)
+        {
+            return Parse(baseBlock, ActionOnException, null);
+        }
+
+        public static PacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
         {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
@@ -148,11 +154,14 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
                     short interfaceID = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
+                    long tsresol = 6;
+                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
+                        tsresol = value;
                     short dropCount = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)
                         throw new EndOfStreamException("Unable to read beyond the end of the stream");
-                    TimestampHelper timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder);
+                    TimestampHelper timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder, tsresol);
                     int capturedLength = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     int packetLength = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     byte[] data = binaryReader.ReadBytes(capturedLength);

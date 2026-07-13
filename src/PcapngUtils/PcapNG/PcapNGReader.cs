@@ -35,6 +35,9 @@ namespace Haukcode.PcapngUtils.PcapNG
         private Stream stream;
         private long basePosition = 0;
         private bool ReverseByteOrder = false;
+        private int interfaceId = 0;
+        private readonly Dictionary<int, long> tsresols = new Dictionary<int, long>();
+        private readonly Dictionary<int, long> initialTsresols = new Dictionary<int, long>();
 
         private List<HeaderWithInterfacesDescriptions> headersWithInterface = new List<HeaderWithInterfacesDescriptions>();
 
@@ -84,27 +87,28 @@ namespace Haukcode.PcapngUtils.PcapNG
             var preHeadersWithInterface = new List<KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>>();
             while (this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length && this.basePosition == 0)
             {
-                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException);
+                AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, this.ReverseByteOrder, ReThrowException, tsresols);
                 if (block == null)
                     break;
 
                 switch (block.BlockType)
                 {
                     case BaseBlock.Types.SectionHeader:
-                        if (block is SectionHeaderBlock)
+                        tsresols.Clear();
+                        interfaceId = 0;
+                        if (block is SectionHeaderBlock headerBlock)
                         {
-                            SectionHeaderBlock headerBlock = block as SectionHeaderBlock;
                             preHeadersWithInterface.Add(new KeyValuePair<SectionHeaderBlock, List<InterfaceDescriptionBlock>>(headerBlock, new List<InterfaceDescriptionBlock>()));
                         }
                         break;
 
                     case BaseBlock.Types.InterfaceDescription:
-                        if (block is InterfaceDescriptionBlock)
+                        if (block is InterfaceDescriptionBlock idb)
                         {
-                            InterfaceDescriptionBlock interfaceBlock = block as InterfaceDescriptionBlock;
+                            RegisterInterface(idb);
                             if (preHeadersWithInterface.Any())
                             {
-                                preHeadersWithInterface.Last().Value.Add(interfaceBlock);
+                                preHeadersWithInterface.Last().Value.Add(idb);
                             }
                             else
                             {
@@ -133,6 +137,12 @@ namespace Haukcode.PcapngUtils.PcapNG
                                                 .Select(x => new HeaderWithInterfacesDescriptions(x.Key, x.Value))
                                                 .ToList();
 
+            initialTsresols.Clear();
+            foreach (KeyValuePair<int, long> item in tsresols)
+            {
+                initialTsresols[item.Key] = item.Value;
+            }
+
             Rewind();
         }
 
@@ -152,6 +162,12 @@ namespace Haukcode.PcapngUtils.PcapNG
             lock (this.syncRoot)
             {
                 this.binaryReader.BaseStream.Position = this.basePosition;
+                tsresols.Clear();
+                foreach (KeyValuePair<int, long> item in initialTsresols)
+                {
+                    tsresols[item.Key] = item.Value;
+                }
+                interfaceId = initialTsresols.Count;
             }
         }
 
@@ -204,43 +220,64 @@ namespace Haukcode.PcapngUtils.PcapNG
             long prevPosition = 0;
             while (this.binaryReader.BaseStream.Position < this.binaryReader.BaseStream.Length)
             {
+                IPacket result = null;
                 lock (this.syncRoot)
                 {
                     prevPosition = this.binaryReader.BaseStream.Position;
-                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException);
+                    block = AbstractBlockFactory.ReadNextBlock(this.binaryReader, this.ReverseByteOrder, OnException, tsresols);
+
+                    if (block == null)
+                    {
+                        throw new Exception($"[ReadPackets] AbstractBlockFactory cannot read packet on position {prevPosition}");
+                    }
+
+                    switch (block.BlockType)
+                    {
+                        case BaseBlock.Types.SectionHeader:
+                            tsresols.Clear();
+                            interfaceId = 0;
+                            break;
+
+                        case BaseBlock.Types.InterfaceDescription:
+                            if (block is InterfaceDescriptionBlock idb)
+                                RegisterInterface(idb);
+                            break;
+
+                        case BaseBlock.Types.EnhancedPacket:
+                            if (!(block is EnhancedPacketBlock enhancedBlock))
+                                throw new Exception($"[ReadPackets] system cannot cast block to EnhancedPacketBlock. Block start on position: {prevPosition}.");
+                            result = enhancedBlock;
+                            break;
+
+                        case BaseBlock.Types.Packet:
+                            if (!(block is PacketBlock packetBlock))
+                                throw new Exception($"[ReadPackets] system cannot cast block to PacketBlock. Block start on position: {prevPosition}.");
+                            result = packetBlock;
+                            break;
+
+                        case BaseBlock.Types.SimplePacket:
+                            if (!(block is SimplePacketBlock simpleBlock))
+                                throw new Exception($"[ReadPackets] system cannot cast block to SimplePacketBlock. Block start on position: {prevPosition}.");
+                            result = simpleBlock;
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
 
-                if (block == null)
-                {
-                    throw new Exception($"[ReadPackets] AbstractBlockFactory cannot read packet on position {prevPosition}");
-                }
-
-                switch (block.BlockType)
-                {
-                    case BaseBlock.Types.EnhancedPacket:
-                        if (!(block is EnhancedPacketBlock enhancedBlock))
-                            throw new Exception($"[ReadPackets] system cannot cast block to EnhancedPacketBlock. Block start on position: {prevPosition}.");
-                        else
-                            return enhancedBlock;
-
-                    case BaseBlock.Types.Packet:
-                        if (!(block is PacketBlock packetBlock))
-                            throw new Exception($"[ReadPackets] system cannot cast block to PacketBlock. Block start on position: {prevPosition}.");
-                        else
-                            return packetBlock;
-
-                    case BaseBlock.Types.SimplePacket:
-                        if (!(block is SimplePacketBlock simpleBlock))
-                            throw new Exception($"[ReadPackets] system cannot cast block to SimplePacketBlock. Block start on position: {prevPosition}.");
-                        else
-                            return simpleBlock;
-
-                    default:
-                        break;
-                }
+                if (result != null)
+                    return result;
             }
 
             return null;
+        }
+
+        private void RegisterInterface(InterfaceDescriptionBlock idb)
+        {
+            long tsresol = (long)(idb.Options.TimestampResolution ?? 6);
+            tsresols[interfaceId] = tsresol;
+            interfaceId++;
         }
     }
 }

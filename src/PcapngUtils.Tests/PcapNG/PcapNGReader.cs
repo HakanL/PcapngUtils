@@ -40,5 +40,113 @@ namespace Haukcode.PcapngUtils.PcapNG
                 }, Throws.TypeOf<EndOfStreamException>());
             }
         }
+
+        [Test]
+        public static void PcapNGReader_ReadNextPacket_UsesInterfaceTimestampResolution_Test()
+        {
+            byte[] pcapNgBytes = CreatePcapNgWithNanosecondTimestampResolution();
+
+            using (MemoryStream stream = new MemoryStream(pcapNgBytes))
+            {
+                using (PcapNGReader reader = new PcapNGReader(stream, false))
+                {
+                    IPacket packet = reader.ReadNextPacket();
+
+                    Assert.IsNotNull(packet);
+                    Assert.AreEqual((uint)1, packet.Seconds);
+                    Assert.AreEqual((uint)500_000, packet.Microseconds);
+                }
+            }
+        }
+
+        [Test]
+        public static void PcapNGReader_Rewind_PreservesInterfaceTimestampResolution_Test()
+        {
+            byte[] pcapNgBytes = CreatePcapNgWithNanosecondTimestampResolution();
+
+            using (MemoryStream stream = new MemoryStream(pcapNgBytes))
+            {
+                using (PcapNGReader reader = new PcapNGReader(stream, false))
+                {
+                    IPacket firstPacket = reader.ReadNextPacket();
+
+                    Assert.IsNotNull(firstPacket);
+                    Assert.AreEqual((uint)1, firstPacket.Seconds);
+                    Assert.AreEqual((uint)500_000, firstPacket.Microseconds);
+
+                    reader.Rewind();
+
+                    IPacket packetAfterRewind = reader.ReadNextPacket();
+
+                    Assert.IsNotNull(packetAfterRewind);
+                    Assert.AreEqual((uint)1, packetAfterRewind.Seconds);
+                    Assert.AreEqual((uint)500_000, packetAfterRewind.Microseconds);
+                }
+            }
+        }
+
+        private static byte[] CreatePcapNgWithNanosecondTimestampResolution()
+        {
+            List<byte> bytes = new List<byte>();
+            bytes.AddRange(CreateSectionHeaderBlock());
+            bytes.AddRange(CreateInterfaceDescriptionBlockWithNanosecondResolution());
+            bytes.AddRange(CreateEnhancedPacketBlockWithNanosecondTimestamp());
+            return bytes.ToArray();
+        }
+
+        private static byte[] CreateBlock(uint blockType, byte[] body)
+        {
+            List<byte> block = new List<byte>();
+            uint blockTotalLength = (uint)(12 + body.Length);
+            block.AddRange(BitConverter.GetBytes(blockType));
+            block.AddRange(BitConverter.GetBytes(blockTotalLength));
+            block.AddRange(body);
+            block.AddRange(BitConverter.GetBytes(blockTotalLength));
+            return block.ToArray();
+        }
+
+        private static byte[] CreateSectionHeaderBlock()
+        {
+            List<byte> body = new List<byte>();
+            body.AddRange(BitConverter.GetBytes((uint)0x1A2B3C4D));  // Byte-Order Magic
+            body.AddRange(BitConverter.GetBytes((ushort)1));           // Major Version
+            body.AddRange(BitConverter.GetBytes((ushort)0));           // Minor Version
+            body.AddRange(BitConverter.GetBytes((ulong)0xFFFFFFFFFFFFFFFF)); // Section Length: unspecified
+            body.AddRange(BitConverter.GetBytes((ushort)0));           // End of options
+            body.AddRange(BitConverter.GetBytes((ushort)0));
+            return CreateBlock(0x0A0D0D0A, body.ToArray());
+        }
+
+        private static byte[] CreateInterfaceDescriptionBlockWithNanosecondResolution()
+        {
+            List<byte> body = new List<byte>();
+            body.AddRange(BitConverter.GetBytes((ushort)1));     // LinkType: Ethernet
+            body.AddRange(BitConverter.GetBytes((ushort)0));     // Reserved
+            body.AddRange(BitConverter.GetBytes((uint)65535));   // SnapLen
+            // Option: if_tsresol (code=9, length=1, value=9 means 10^-9 = nanoseconds)
+            body.AddRange(BitConverter.GetBytes((ushort)9));
+            body.AddRange(BitConverter.GetBytes((ushort)1));
+            body.Add(9);
+            body.Add(0); body.Add(0); body.Add(0); // padding to 32-bit boundary
+            body.AddRange(BitConverter.GetBytes((ushort)0));     // End of options
+            body.AddRange(BitConverter.GetBytes((ushort)0));
+            return CreateBlock(1, body.ToArray());
+        }
+
+        private static byte[] CreateEnhancedPacketBlockWithNanosecondTimestamp()
+        {
+            List<byte> body = new List<byte>();
+            byte[] packetData = { 1, 2, 3, 4 };
+            ulong timestamp = 1_500_000_000; // 1.5 seconds in nanoseconds
+            body.AddRange(BitConverter.GetBytes((uint)0));                   // Interface ID
+            body.AddRange(BitConverter.GetBytes((uint)(timestamp >> 32)));   // Timestamp High
+            body.AddRange(BitConverter.GetBytes((uint)timestamp));           // Timestamp Low
+            body.AddRange(BitConverter.GetBytes((uint)packetData.Length));   // Captured Packet Length
+            body.AddRange(BitConverter.GetBytes((uint)packetData.Length));   // Original Packet Length
+            body.AddRange(packetData);
+            body.AddRange(BitConverter.GetBytes((ushort)0));                 // End of options
+            body.AddRange(BitConverter.GetBytes((ushort)0));
+            return CreateBlock(6, body.ToArray());
+        }
     }
 }

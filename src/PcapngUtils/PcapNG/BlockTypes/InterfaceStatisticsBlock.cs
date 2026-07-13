@@ -80,6 +80,11 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         #region ctor
         public static InterfaceStatisticsBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException)
         {
+            return Parse(baseBlock, ActionOnException, null);
+        }
+
+        public static InterfaceStatisticsBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException, Dictionary<int, long> tsresols)
+        {
             CustomContract.Requires<ArgumentNullException>(baseBlock != null, "BaseBlock cannot be null");
             CustomContract.Requires<ArgumentNullException>(baseBlock.Body != null, "BaseBlock.Body cannot be null");
             CustomContract.Requires<ArgumentException>(baseBlock.BlockType == BaseBlock.Types.InterfaceStatistics, "Invalid packet type");    
@@ -90,10 +95,13 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
+                    long tsresol = 6;
+                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
+                        tsresol = value;
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)
                         throw new EndOfStreamException("Unable to read beyond the end of the stream");
-                    TimestampHelper timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder);
+                    TimestampHelper timestampHelper = new TimestampHelper(timestamp, baseBlock.ReverseByteOrder, tsresol);
                     InterfaceStatisticsOption options = InterfaceStatisticsOption.Parse(binaryReader, baseBlock.ReverseByteOrder, ActionOnException);
                     InterfaceStatisticsBlock statisticBlock = new InterfaceStatisticsBlock(interfaceID, timestampHelper, options, positionInStream);
                     return statisticBlock;
