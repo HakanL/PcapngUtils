@@ -79,9 +79,13 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
 
             CustomContract.Requires<OverflowException>(totalMicrosDecimal >= 0 && totalMicrosDecimal <= (decimal)long.MaxValue, "Timestamp value is out of range for microsecond representation");
 
-            long totalMicros = (long)totalMicrosDecimal;
-            Seconds = (uint)(totalMicros / 1_000_000);
-            Microseconds = (uint)(totalMicros % 1_000_000);
+long totalMicros = (long)totalMicrosDecimal;
+
+long seconds = totalMicros / 1_000_000;
+CustomContract.Requires<OverflowException>(seconds >= 0 && seconds <= uint.MaxValue, "Timestamp value is out of range for Seconds/Microseconds representation");
+
+Seconds = (uint)seconds;
+Microseconds = (uint)(totalMicros % 1_000_000);
         }
 
         public TimestampHelper(uint seconds, uint microseconds)
