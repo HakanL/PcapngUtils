@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Haukcode.PcapngUtils.Extensions;
@@ -56,8 +55,8 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             CustomContract.Requires<ArgumentNullException>(timestampAsByte != null, "timestampAsByte cannot be null");
             CustomContract.Requires<ArgumentException>(timestampAsByte.Length == 8, "timestamp must have length = 8");
 
-            TimestampHigh = (BitConverter.ToUInt32(timestampAsByte.Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
-            TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
+            TimestampHigh = BitConverter.ToUInt32(timestampAsByte, 0).ReverseByteOrder(reverseByteOrder);
+            TimestampLow = BitConverter.ToUInt32(timestampAsByte, 4).ReverseByteOrder(reverseByteOrder);
 
             ulong ts = ((ulong)TimestampHigh << 32) | TimestampLow;
             bool isPwr2 = (tsresol & 0b10000000) != 0;

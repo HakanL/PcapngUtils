@@ -78,6 +78,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
         #endregion
 
         #region ctor
+        [Obsolete("Use the overload that accepts a tsresols dictionary so that per-interface timestamp resolution is applied correctly.")]
         public static InterfaceStatisticsBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException)
         {
             return Parse(baseBlock, ActionOnException, null);
