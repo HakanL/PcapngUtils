@@ -26,7 +26,9 @@ jobs:
         prop_path: 'version'
         
     - name: Set branch name
-      run: echo "BRANCH_NAME=${{ github.head_ref != '' && format('PR-{0}', github.head_ref) || github.ref_name }}" >> $GITHUB_ENV
+      run: |
+        RAW_BRANCH="${{ github.head_ref != '' && format('PR-{0}', github.head_ref) || github.ref_name }}"
+        echo "BRANCH_NAME=${RAW_BRANCH//\//-}" >> $GITHUB_ENV
 
     - run: echo Branch name ${BRANCH_NAME}
 
