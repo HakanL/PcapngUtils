@@ -65,11 +65,11 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
 
             if (isPwr2)
             {
-                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 95, "base-2 tsresol exponent is too large to convert timestamp safely");
+                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 95, "base-2 tsresol exponent must be <= 95 to prevent overflow when converting timestamps to microseconds");
             }
             else
             {
-                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 28, "base-10 tsresol exponent is too large to convert timestamp safely");
+                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 28, "base-10 tsresol exponent must be <= 28 to prevent overflow when converting timestamps to microseconds");
             }
 
             // Iterative decimal multiplication is intentional: Math.Pow returns double which
