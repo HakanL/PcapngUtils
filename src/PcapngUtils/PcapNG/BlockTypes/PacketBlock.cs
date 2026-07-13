@@ -153,10 +153,11 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    short interfaceID = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
-                    byte tsresol = 6;
-                    if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
-                        tsresol = (byte)value;
+short interfaceID = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
+int interfaceKey = unchecked((ushort)interfaceID);
+byte tsresol = 6;
+if (tsresols != null && tsresols.TryGetValue(interfaceKey, out long value))
+    tsresol = (byte)value;
                     short dropCount = binaryReader.ReadInt16().ReverseByteOrder(baseBlock.ReverseByteOrder);
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)
