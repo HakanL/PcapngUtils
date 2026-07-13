@@ -48,17 +48,21 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
         {
             CustomContract.Requires<ArgumentNullException>(timestampAsByte != null, "timestampAsByte cannot be null");
             CustomContract.Requires<ArgumentException>(timestampAsByte.Length == 8, "timestamp must have length = 8");
-
             TimestampHigh = (BitConverter.ToUInt32(timestampAsByte.Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
             TimestampLow = (BitConverter.ToUInt32(timestampAsByte.Skip(4).Take(4).ToArray(), 0)).ReverseByteOrder(reverseByteOrder);
-
             ulong ts = ((ulong)TimestampHigh << 32) | TimestampLow;
             CustomContract.Requires<ArgumentOutOfRangeException>(tsresol >= byte.MinValue && tsresol <= byte.MaxValue, "tsresol must be in range 0..255");
             byte tsresolByte = (byte)tsresol;
             bool isPwr2 = (tsresolByte & 0b10000000) > 0;
-            int exponent  = tsresolByte & 0b01111111;
-            CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 28, "tsresol exponent is too large to convert timestamp to microseconds safely");
-            // Note: tsresol usually is 6 or 9 to represent microseconds or nanoseconds
+            int exponent = tsresolByte & 0b01111111;
+            if (isPwr2)
+            {
+                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 95, "base-2 tsresol exponent is too large to convert timestamp safely");
+            }
+            else
+            {
+                CustomContract.Requires<ArgumentOutOfRangeException>(exponent <= 28, "base-10 tsresol exponent is too large to convert timestamp safely");
+            }
             decimal scale = isPwr2 ? Pow2(exponent) : Pow10(exponent);
             long totalMicros = decimal.ToInt64(decimal.Round(((decimal)ts * 1_000_000m) / scale, MidpointRounding.AwayFromZero));
             Seconds = (uint)(totalMicros / 1_000_000);

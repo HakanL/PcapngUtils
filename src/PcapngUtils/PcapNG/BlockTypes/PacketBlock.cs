@@ -135,6 +135,12 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
 
         #endregion
 
+        [Obsolete("This overload defaults tsresol to 6.")]
+        public static PacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException)
+        {
+            return Parse(baseBlock, ActionOnException, new Dictionary<int, long>());
+        }
+
         #region ctor
         public static PacketBlock Parse(BaseBlock baseBlock, Action<Exception> ActionOnException,  Dictionary<int, long> tsresols)
         {
