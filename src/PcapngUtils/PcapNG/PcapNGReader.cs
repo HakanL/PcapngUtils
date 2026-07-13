@@ -277,7 +277,7 @@ namespace Haukcode.PcapngUtils.PcapNG
 
         private void RegisterInterface(InterfaceDescriptionBlock idb)
         {
-            long tsresol = (long)(idb.Options.TimestampResolution ?? 6);
+            byte tsresol = idb.Options.TimestampResolution ?? 6;
             tsresols[interfaceId] = tsresol;
             interfaceId++;
         }

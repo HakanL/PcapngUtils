@@ -143,9 +143,9 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
                     int interfaceID = binaryReader.ReadInt32().ReverseByteOrder(baseBlock.ReverseByteOrder);
-                    long tsresol = 6;
+                    byte tsresol = 6;
                     if (tsresols != null && tsresols.TryGetValue(interfaceID, out long value))
-                        tsresol = value;
+                        tsresol = (byte)value;
                     byte[] timestamp = binaryReader.ReadBytes(8);
                     if (timestamp.Length < 8)
                         throw new EndOfStreamException("Unable to read beyond the end of the stream");
