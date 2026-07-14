@@ -26,7 +26,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, new Dictionary<int, byte>());
                     Assert.IsNotNull(block);
                     preStatisticBlock = block as InterfaceStatisticsBlock;
                     Assert.IsNotNull(preStatisticBlock);
@@ -37,7 +37,7 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null);
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, reorder, null, new Dictionary<int, byte>());
                     Assert.IsNotNull(block);
                     postStatisticBlock = block as InterfaceStatisticsBlock;
                     Assert.IsNotNull(postStatisticBlock);
@@ -53,6 +53,57 @@ namespace Haukcode.PcapngUtils.PcapNG.BlockTypes
                     Assert.AreEqual(preStatisticBlock.Options.InterfaceDrop, postStatisticBlock.Options.InterfaceDrop);
                     Assert.AreEqual(preStatisticBlock.Options.InterfaceReceived, postStatisticBlock.Options.InterfaceReceived);
                     Assert.AreEqual(preStatisticBlock.Options.SystemDrop, postStatisticBlock.Options.SystemDrop);
+                }
+            }
+        }
+
+        [Test]
+        public static void InterfaceStatisticsBlock_UsesInterfaceTimestampResolution_Test()
+        {
+            // Block timestamp and isb_starttime/isb_endtime options all carry
+            // 1,500,000,000 units; with if_tsresol = 9 (nanoseconds) that is 1.5 seconds.
+            ulong timestamp = 1_500_000_000;
+            byte[] timestampHigh = BitConverter.GetBytes((uint)(timestamp >> 32));
+            byte[] timestampLow = BitConverter.GetBytes((uint)timestamp);
+
+            List<byte> body = new List<byte>();
+            body.AddRange(BitConverter.GetBytes(0));                // Interface ID
+            body.AddRange(timestampHigh);
+            body.AddRange(timestampLow);
+            body.AddRange(BitConverter.GetBytes((ushort)2));        // isb_starttime
+            body.AddRange(BitConverter.GetBytes((ushort)8));
+            body.AddRange(timestampHigh);
+            body.AddRange(timestampLow);
+            body.AddRange(BitConverter.GetBytes((ushort)3));        // isb_endtime
+            body.AddRange(BitConverter.GetBytes((ushort)8));
+            body.AddRange(timestampHigh);
+            body.AddRange(timestampLow);
+            body.AddRange(BitConverter.GetBytes((ushort)0));        // End of options
+            body.AddRange(BitConverter.GetBytes((ushort)0));
+
+            List<byte> byteblock = new List<byte>();
+            uint blockTotalLength = (uint)(12 + body.Count);
+            byteblock.AddRange(BitConverter.GetBytes((uint)5));     // InterfaceStatistics
+            byteblock.AddRange(BitConverter.GetBytes(blockTotalLength));
+            byteblock.AddRange(body);
+            byteblock.AddRange(BitConverter.GetBytes(blockTotalLength));
+
+            var tsresols = new Dictionary<int, byte> { { 0, 9 } };
+            using (MemoryStream stream = new MemoryStream(byteblock.ToArray()))
+            {
+                using (BinaryReader binaryReader = new BinaryReader(stream))
+                {
+                    AbstractBlock block = AbstractBlockFactory.ReadNextBlock(binaryReader, false, null, tsresols);
+                    Assert.IsNotNull(block);
+                    InterfaceStatisticsBlock statisticsBlock = block as InterfaceStatisticsBlock;
+                    Assert.IsNotNull(statisticsBlock);
+
+                    Assert.AreEqual((uint)1, statisticsBlock.Timestamp.Seconds);
+                    Assert.AreEqual((uint)500_000, statisticsBlock.Timestamp.Microseconds);
+                    Assert.AreEqual((uint)1, statisticsBlock.Options.StartTime.Seconds);
+                    Assert.AreEqual((uint)500_000, statisticsBlock.Options.StartTime.Microseconds);
+                    Assert.AreEqual((uint)1, statisticsBlock.Options.EndTime.Seconds);
+                    Assert.AreEqual((uint)500_000, statisticsBlock.Options.EndTime.Microseconds);
                 }
             }
         }

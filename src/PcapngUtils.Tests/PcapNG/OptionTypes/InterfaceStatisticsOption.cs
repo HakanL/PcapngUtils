@@ -25,7 +25,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             preOption.Comments.Add("Test Comment");
             preOption.DeliveredToUser = 25;
             preOption.EndTime = new TimestampHelper(new byte[] { 1, 0, 0, 0, 2, 0, 0, 0 }, false);
-            preOption.StartTime = new TimestampHelper(new byte[] { 1, 0, 0, 3, 2, 0, 0, 4 }, false);
+            preOption.StartTime = new TimestampHelper(new byte[] { 5, 0, 0, 0, 6, 0, 0, 0 }, false);
             preOption.FilterAccept = 30;
             preOption.InterfaceDrop = 35;
             preOption.InterfaceReceived = 40;
@@ -36,7 +36,7 @@ namespace Haukcode.PcapngUtils.PcapNG.OptionTypes
             {
                 using (BinaryReader binaryReader = new BinaryReader(stream))
                 {
-                    postOption = InterfaceStatisticsOption.Parse(binaryReader, reorder, null);
+                    postOption = InterfaceStatisticsOption.Parse(binaryReader, reorder, null, 6);
                 }
             }
 
