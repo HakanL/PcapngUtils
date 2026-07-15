@@ -56,7 +56,8 @@ jobs:
     - name: Set branch name
       run: |
         RAW_BRANCH="${{ github.head_ref != '' && format('PR-{0}', github.head_ref) || github.ref_name }}"
-        echo "BRANCH_NAME=${RAW_BRANCH//\//-}" >> $GITHUB_ENV
+        BRANCH_NAME=$(printf '%s' "$RAW_BRANCH" | sed 's/[^0-9A-Za-z-]/-/g; s/-\{2,\}/-/g; s/^-//; s/-$//')
+        echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
 
     - run: echo Branch name ${BRANCH_NAME}
 
