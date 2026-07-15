@@ -30,4 +30,8 @@
     <None Include="NuGet-README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.6.0" />
+  </ItemGroup>
+
 </Project>

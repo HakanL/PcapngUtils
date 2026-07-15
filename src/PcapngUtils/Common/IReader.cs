@@ -29,6 +29,17 @@ namespace Haukcode.PcapngUtils.Common
         IPacket ReadNextPacket();
 
         /// <summary>
+        /// Read one packet into a reader-owned reusable buffer, avoiding the per-packet
+        /// allocation of ReadNextPacket(). The packet's Data is only valid until the next
+        /// read or rewind on this reader — copy the bytes if they must live longer. Because
+        /// the buffer is shared, interleaving reads from multiple threads is not supported
+        /// with this overload.
+        /// </summary>
+        /// <param name="packet">The packet that was read; valid until the next read or rewind</param>
+        /// <returns>false at EOF</returns>
+        bool ReadNextPacket(out PacketMemory packet);
+
+        /// <summary>
         /// Current file position
         /// </summary>
         long Position { get; set; }

@@ -216,6 +216,26 @@ namespace Haukcode.PcapngUtils.PcapNG
             }
         }
 
+        /// <summary>
+        /// Satisfies the buffer-reusing read contract, but pcapNG block parsing still allocates
+        /// per block internally, so unlike the pcap reader this overload does not eliminate the
+        /// per-packet allocation. The returned Data is a fresh array each call.
+        /// </summary>
+        public bool ReadNextPacket(out PacketMemory packet)
+        {
+            var next = ReadNextPacket();
+            if (next == null)
+            {
+                packet = default;
+                return false;
+            }
+
+            long position = next is AbstractBlock block ? block.PositionInStream : 0;
+            packet = new PacketMemory(next.Seconds, next.Microseconds, next.Data, position);
+
+            return true;
+        }
+
         public IPacket ReadNextPacket()
         {
             AbstractBlock block;

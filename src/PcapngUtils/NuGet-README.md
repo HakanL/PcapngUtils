@@ -45,6 +45,21 @@ while (reader.MoreAvailable)
 }
 ```
 
+### Allocation-free (reusable buffer)
+
+```csharp
+using Haukcode.PcapngUtils;
+using Haukcode.PcapngUtils.Common;
+
+using var reader = IReaderFactory.GetReader("capture.pcap");
+
+while (reader.ReadNextPacket(out PacketMemory packet))
+{
+    // packet.Data is valid until the next ReadNextPacket/Rewind call — copy if it must live longer
+    Console.WriteLine($"Packet: {packet.Seconds}.{packet.Microseconds:D6}  ({packet.Data.Length} bytes)");
+}
+```
+
 ### Via event callback
 
 ```csharp

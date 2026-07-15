@@ -112,32 +112,76 @@ namespace Haukcode.PcapngUtils.Pcap
         /// <inheritdoc/>
         public IPacket ReadNextPacket()
         {
-            uint secs, usecs, caplen, len;
-            long position = 0;
-            byte[] data;
+            if (!ReadNextPacketCore(reuseBuffer: false, out uint secs, out uint usecs, out ArraySegment<byte> data, out long position))
+                return null;
 
-            while (binaryReader.BaseStream.Position < binaryReader.BaseStream.Length)
+            return new PcapPacket(secs, usecs, data.Array, position);
+        }
+
+        /// <inheritdoc/>
+        public bool ReadNextPacket(out PacketMemory packet)
+        {
+            if (!ReadNextPacketCore(reuseBuffer: true, out uint secs, out uint usecs, out ArraySegment<byte> data, out long position))
             {
-                lock (this.syncRoot)
-                {
-                    position = binaryReader.BaseStream.Position;
-                    secs = binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
-                    usecs = binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
-                    if (Header.NanoSecondResolution)
-                        usecs = usecs / 1000;
-                    caplen = binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
-                    len = binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
-
-                    data = binaryReader.ReadBytes((int)caplen);
-                    if (data.Length < caplen)
-                        throw new EndOfStreamException("Unable to read beyond the end of the stream");
-                }
-                var packet = new PcapPacket(secs, usecs, data, position);
-
-                return packet;
+                packet = default;
+                return false;
             }
 
-            return null;
+            packet = new PacketMemory(secs, usecs, new ReadOnlyMemory<byte>(data.Array, data.Offset, data.Count), position);
+            return true;
+        }
+
+        // Grow-only scratch buffer for the allocation-free read path; sized so typical
+        // Ethernet frames fit without growing.
+        private byte[] reusableBuffer = new byte[2048];
+
+        private bool ReadNextPacketCore(bool reuseBuffer, out uint seconds, out uint microseconds, out ArraySegment<byte> data, out long position)
+        {
+            if (this.binaryReader.BaseStream.Position >= this.binaryReader.BaseStream.Length)
+            {
+                seconds = 0;
+                microseconds = 0;
+                data = default;
+                position = 0;
+
+                return false;
+            }
+
+            lock (this.syncRoot)
+            {
+                position = this.binaryReader.BaseStream.Position;
+                seconds = this.binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
+                microseconds = this.binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
+                if (Header.NanoSecondResolution)
+                    microseconds = microseconds / 1000;
+                uint caplen = this.binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
+                uint len = this.binaryReader.ReadUInt32().ReverseByteOrder(Header.ReverseByteOrder);
+
+                byte[] buffer;
+                if (reuseBuffer)
+                {
+                    if (this.reusableBuffer.Length < caplen)
+                        this.reusableBuffer = new byte[Math.Max((int)caplen, this.reusableBuffer.Length * 2)];
+                    buffer = this.reusableBuffer;
+                }
+                else
+                {
+                    buffer = new byte[caplen];
+                }
+
+                int totalRead = 0;
+                while (totalRead < (int)caplen)
+                {
+                    int read = this.binaryReader.Read(buffer, totalRead, (int)caplen - totalRead);
+                    if (read <= 0)
+                        throw new EndOfStreamException("Unable to read beyond the end of the stream");
+                    totalRead += read;
+                }
+
+                data = new ArraySegment<byte>(buffer, 0, (int)caplen);
+            }
+
+            return true;
         }
 
         /// <summary>

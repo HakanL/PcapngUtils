@@ -139,6 +139,23 @@ while (reader.MoreAvailable)
 }
 ```
 
+#### Allocation-free reading
+
+`ReadNextPacket(out PacketMemory packet)` reads into a reader-owned reusable buffer instead of allocating a fresh `byte[]` per packet — useful on hot paths where per-packet garbage matters. The packet's `Data` is only valid until the next read or rewind on that reader, so copy any bytes that must live longer. Because the buffer is shared, this overload does not support interleaved reads from multiple threads. (On `PcapNGReader` the overload satisfies the same contract but block parsing still allocates internally.)
+
+```csharp
+using Haukcode.PcapngUtils;
+using Haukcode.PcapngUtils.Common;
+
+using var reader = IReaderFactory.GetReader("capture.pcap");
+
+while (reader.ReadNextPacket(out PacketMemory packet))
+{
+    // packet.Data is valid until the next ReadNextPacket/Rewind call
+    Console.WriteLine($"Packet: {packet.Seconds}.{packet.Microseconds:D6}  ({packet.Data.Length} bytes)");
+}
+```
+
 ### Read packets via event callback
 
 Use `ReadPackets()` with the `OnReadPacketEvent` callback when you prefer an event-driven model. The call blocks until all packets have been read or the cancellation token is triggered.
@@ -257,6 +274,7 @@ reader.ReadPackets(CancellationToken.None);
 | Member | Description |
 |---|---|
 | `ReadNextPacket()` | Reads and returns the next packet, or `null` at end-of-file. |
+| `ReadNextPacket(out PacketMemory)` | Reads the next packet into a reader-owned reusable buffer (no per-packet allocation); returns `false` at end-of-file. The packet's `Data` is only valid until the next read or rewind. |
 | `ReadPackets(CancellationToken)` | Reads all packets, raising `OnReadPacketEvent` for each. Blocks until complete or cancelled. |
 | `OnReadPacketEvent` | Event raised for each packet read by `ReadPackets()`. |
 | `OnExceptionEvent` | Event raised when a non-fatal read error occurs. If not subscribed, the exception is rethrown. |
