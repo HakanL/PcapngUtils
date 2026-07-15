@@ -14,6 +14,9 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
 
     steps:
     - uses: actions/checkout@v4
@@ -54,7 +57,7 @@ jobs:
 
     ## Publish and Tag
     - name: Publish NuGet
-      run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_KEY }}
+      run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key AzureAD
       if: github.ref == 'refs/heads/main'
     - name: Tag
       run: |
