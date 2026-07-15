@@ -53,8 +53,14 @@ jobs:
       run: dotnet test --no-restore --verbosity normal
 
     ## Publish and Tag
+    - name: NuGet login
+      id: nuget-login
+      uses: NuGet/login@v1
+      with:
+        user: ${{ vars.NUGET_USER || github.repository_owner }}
+      if: github.ref == 'refs/heads/main'
     - name: Publish NuGet
-      run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key AzureAD
+      run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
       if: github.ref == 'refs/heads/main'
     - name: Tag
       run: |
