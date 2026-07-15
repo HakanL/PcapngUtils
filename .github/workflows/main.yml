@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches:
-      - master
+      - main
 
 defaults:
   run:  
@@ -34,9 +34,9 @@ jobs:
 
     # Set PACKAGE_VERSION based on event type
     - run: echo "PACKAGE_VERSION=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-      if: github.ref == 'refs/heads/master' && github.head_ref == ''
+      if: github.ref == 'refs/heads/main' && github.head_ref == ''
     - run: echo "PACKAGE_VERSION=${{steps.version.outputs.prop}}.${GITHUB_RUN_NUMBER}-${BRANCH_NAME}-${GITHUB_SHA::8}" >> $GITHUB_ENV
-      if: github.ref != 'refs/heads/master' || github.head_ref != ''
+      if: github.ref != 'refs/heads/main' || github.head_ref != ''
     - run: echo Version is ${PACKAGE_VERSION}
 
     - name: Setup .NET Core
@@ -55,9 +55,9 @@ jobs:
     ## Publish and Tag
     - name: Publish NuGet
       run: dotnet nuget push PcapngUtils/bin/Release/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_KEY }}
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/main'
     - name: Tag
       run: |
         git tag "v${PACKAGE_VERSION}"
         git push origin "v${PACKAGE_VERSION}"
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/main'
