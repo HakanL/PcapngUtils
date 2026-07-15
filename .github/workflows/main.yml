@@ -19,14 +19,11 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Get main version
       id: version
-      uses: notiz-dev/github-action-json-property@release
-      with:
-        path: version.json
-        prop_path: 'version'
+      run: echo "prop=$(jq -r '.version' ../version.json)" >> $GITHUB_OUTPUT
         
     - name: Set branch name
       run: |
@@ -43,7 +40,7 @@ jobs:
     - run: echo Version is ${PACKAGE_VERSION}
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.204
     - name: Install dependencies
