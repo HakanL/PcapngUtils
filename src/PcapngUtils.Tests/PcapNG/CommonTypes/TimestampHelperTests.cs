@@ -126,7 +126,7 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
         }
 
         [Test]
-        public static void TimeStampHelper_PreservesLargeTimestamp()
+        public static void TimestampHelper_PreservesLargeTimestamp_Test()
         {
             uint seconds = 1_792_142_478;
             uint microseconds = 275_000;
