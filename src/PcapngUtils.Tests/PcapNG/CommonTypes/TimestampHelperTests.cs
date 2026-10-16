@@ -124,5 +124,18 @@ namespace Haukcode.PcapngUtils.PcapNG.CommonTypes
             ulong ts = ((ulong)uint.MaxValue + 1) * 1_000_000;
             Assert.Throws<OverflowException>(() => new TimestampHelper(MakeTimestampBytes(ts), false, 6));
         }
+
+        [Test]
+        public static void TimeStampHelper_PreservesLargeTimestamp()
+        {
+            uint seconds = 1_792_142_478;
+            uint microseconds = 275_000;
+            var helper = new TimestampHelper(seconds, microseconds);
+
+            ulong expected = 1_792_142_478_275_000UL;
+            ulong actual = ((ulong)helper.TimestampHigh << 32) | helper.TimestampLow;
+
+            Assert.AreEqual(expected, actual);
+        }
     }
 }
